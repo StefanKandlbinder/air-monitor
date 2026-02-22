@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Cloud, Gauge, MapPin, X } from "lucide-react";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -85,6 +86,7 @@ export function DetailsPanel({
 }: DetailsPanelProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
   const formatLocalDateOnly = (date: Date): string => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -171,6 +173,18 @@ export function DetailsPanel({
       }, new Map<number, { timestamp: number; no2?: number; pm10?: number; pm25?: number }>())
       .values(),
   ).sort((a, b) => a.timestamp - b.timestamp);
+  const selectedFromTimestamp = dateFrom
+    ? dayjs(dateFrom).valueOf()
+    : Number.NaN;
+  const selectedToTimestamp = dateTo
+    ? dayjs(dateTo).valueOf()
+    : Number.NaN;
+  const xAxisDomain: [number, number] | ["dataMin", "dataMax"] =
+    Number.isFinite(selectedFromTimestamp) &&
+    Number.isFinite(selectedToTimestamp) &&
+    selectedFromTimestamp < selectedToTimestamp
+      ? [selectedFromTimestamp, selectedToTimestamp]
+      : ["dataMin", "dataMax"];
 
   const renderChartTooltip = (props: unknown) => {
     const { active, payload, label } = (props ?? {}) as {
@@ -227,6 +241,17 @@ export function DetailsPanel({
         </p>
       </div>
     );
+  };
+
+  const toggleSeriesVisibility = (dataKey?: unknown): void => {
+    if (typeof dataKey !== "string") {
+      return;
+    }
+
+    setHiddenSeries((current) => ({
+      ...current,
+      [dataKey]: !current[dataKey],
+    }));
   };
 
   return (
@@ -438,6 +463,8 @@ export function DetailsPanel({
                     dataKey="timestamp"
                     type="number"
                     scale="time"
+                    interval="preserveStartEnd"
+                    minTickGap={24}
                     tick={{
                       fontSize: 12,
                       fontFamily: "inherit",
@@ -446,7 +473,7 @@ export function DetailsPanel({
                     tickFormatter={(value) =>
                       dayjs(value).tz("Europe/Vienna").format("DD.MM HH:mm")
                     }
-                    domain={["dataMin", "dataMax"]}
+                    domain={xAxisDomain}
                   />
                   <YAxis
                     tick={{
@@ -462,29 +489,43 @@ export function DetailsPanel({
                   />
                   <Tooltip content={renderChartTooltip} />
                   <Legend
-                    wrapperStyle={{ fontFamily: "inherit", fontSize: "12px" }}
+                    onClick={(entry) => {
+                      toggleSeriesVisibility(entry?.dataKey);
+                    }}
+                    wrapperStyle={{
+                      fontFamily: "inherit",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                    }}
                   />
-                  <ReferenceLine
-                    y={30}
-                    stroke="#06b6d4"
-                    strokeDasharray="5 5"
-                  />
-                  <ReferenceLine
-                    y={50}
-                    stroke="#f97316"
-                    strokeDasharray="5 5"
-                  />
-                  <ReferenceLine
-                    y={25}
-                    stroke="#a855f7"
-                    strokeDasharray="5 5"
-                  />
+                  {!hiddenSeries.no2 ? (
+                    <ReferenceLine
+                      y={30}
+                      stroke="#06b6d4"
+                      strokeDasharray="5 5"
+                    />
+                  ) : null}
+                  {!hiddenSeries.pm10 ? (
+                    <ReferenceLine
+                      y={50}
+                      stroke="#f97316"
+                      strokeDasharray="5 5"
+                    />
+                  ) : null}
+                  {!hiddenSeries.pm25 ? (
+                    <ReferenceLine
+                      y={25}
+                      stroke="#a855f7"
+                      strokeDasharray="5 5"
+                    />
+                  ) : null}
                   <Line
                     type="monotone"
                     dataKey="no2"
                     stroke="#06b6d4"
                     dot={false}
                     name="NO2 (30)"
+                    hide={!!hiddenSeries.no2}
                   />
                   <Line
                     type="monotone"
@@ -492,6 +533,7 @@ export function DetailsPanel({
                     stroke="#f97316"
                     dot={false}
                     name="PM10 (50)"
+                    hide={!!hiddenSeries.pm10}
                   />
                   <Line
                     type="monotone"
@@ -499,6 +541,7 @@ export function DetailsPanel({
                     stroke="#a855f7"
                     dot={false}
                     name="PM2.5 (25)"
+                    hide={!!hiddenSeries.pm25}
                   />
                 </LineChart>
               </ResponsiveContainer>
