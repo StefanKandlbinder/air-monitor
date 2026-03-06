@@ -8,8 +8,8 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useRangeMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
 import { groupComponents, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
-import { DetailsPanel } from "@/components/station-map/details-panel";
-import { MapCard } from "@/components/station-map/map-card";
+import { DetailsPanel } from "@/components/station-map/DetailsPanel";
+import { MapCard } from "@/components/station-map/MapCard";
 import type { MeanType, StationSnapshotResponse, UserLocation } from "@/components/station-map/types";
 import type { OfficialStation } from "@/lib/types";
 
@@ -38,15 +38,6 @@ function toUpperAustriaDateParam(value: string): string {
   return value.replace("T", " ");
 }
 
-function formatLocalDateTime(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
 function buildLastWeekRange(): { datvon: string; datbis: string } {
   const from = new Date();
   const to = new Date();
@@ -66,6 +57,41 @@ function buildLastWeekRange(): { datvon: string; datbis: string } {
 
 const DISPLAY_COMPONENTS = ["NO2", "PM10kont", "PM25kont"] as const;
 const ACTUAL_MEAN: MeanType = "MW1";
+
+function buildSnapshot(
+  station: OfficialStation,
+  messwerte: { station: string; komponente: string; zeitpunkt: number; messwert: string }[],
+): StationSnapshotResponse {
+  const readings = DISPLAY_COMPONENTS.flatMap((component) => {
+    const componentMeasurements = messwerte.filter(
+      (m) => m.station === station.code && m.komponente === component,
+    );
+
+    if (!componentMeasurements.length) {
+      return [];
+    }
+
+    const latest = componentMeasurements.reduce((currentLatest, candidate) =>
+      candidate.zeitpunkt > currentLatest.zeitpunkt ? candidate : currentLatest,
+    );
+    const normalizedTimestamp =
+      latest.zeitpunkt < 1_000_000_000_000 ? latest.zeitpunkt * 1000 : latest.zeitpunkt;
+
+    return [
+      {
+        station: station.langname,
+        stationHash: `#${station.kurzname.replace(/\s+/g, "-")}`,
+        component: component.replace("kont", ""),
+        mean: ACTUAL_MEAN,
+        limit: component === "NO2" ? 30 : component === "PM10kont" ? 50 : 25,
+        date: new Date(normalizedTimestamp),
+        value: (parseFloat(latest.messwert.replace(",", ".")) * 1000).toFixed(2),
+      },
+    ];
+  });
+
+  return { stationCode: station.code, mean: ACTUAL_MEAN, readings };
+}
 
 export default function StationMap() {
   const router = useRouter();
@@ -171,117 +197,20 @@ export default function StationMap() {
   const rangeMeasurementsQuery = useRangeMeasurementsQuery(ACTUAL_MEAN, activeDateRange);
   const statisticsRange = activeDateRange ?? weeklyRange;
   const weeklyMeasurementsQuery = useRangeMeasurementsQuery(mean, statisticsRange);
-  const snapshot = useMemo<StationSnapshotResponse | null>(() => {
-    if (!activeSelectedStation || !rangeMeasurementsQuery.data) {
-      return null;
-    }
-
-    const readings = DISPLAY_COMPONENTS.flatMap((component) => {
-      const componentMeasurements = rangeMeasurementsQuery.data.messwerte.filter(
-        (measurement) =>
-          measurement.station === activeSelectedStation.code &&
-          measurement.komponente === component,
-      );
-
-      if (!componentMeasurements.length) {
-        return [];
-      }
-
-      const latest = componentMeasurements.reduce((currentLatest, candidate) =>
-        candidate.zeitpunkt > currentLatest.zeitpunkt ? candidate : currentLatest,
-      );
-      const normalizedTimestamp =
-        latest.zeitpunkt < 1_000_000_000_000 ? latest.zeitpunkt * 1000 : latest.zeitpunkt;
-
-      return [
-        {
-          station: activeSelectedStation.langname,
-          stationHash: `#${activeSelectedStation.kurzname.replace(/\s+/g, "-")}`,
-          component: component.replace("kont", ""),
-          mean: ACTUAL_MEAN,
-          limit: component === "NO2" ? 30 : component === "PM10kont" ? 50 : 25,
-          date: new Date(normalizedTimestamp),
-          value: (parseFloat(latest.messwert.replace(",", ".")) * 1000).toFixed(2),
-        },
-      ];
-    });
-
-    return {
-      stationCode: activeSelectedStation.code,
-      mean: ACTUAL_MEAN,
-      readings,
-    };
-  }, [activeSelectedStation, rangeMeasurementsQuery.data]);
-  const actualDataRange = useMemo(() => {
-    if (!activeSelectedStation || !rangeMeasurementsQuery.data?.messwerte.length) {
-      return null;
-    }
-
-    const stationMeasurements = rangeMeasurementsQuery.data.messwerte.filter(
-      (item) => item.station === activeSelectedStation.code,
-    );
-
-    if (!stationMeasurements.length) {
-      return null;
-    }
-
-    const minTimestamp = stationMeasurements.reduce(
-      (min, item) => Math.min(min, item.zeitpunkt),
-      stationMeasurements[0].zeitpunkt,
-    );
-    const maxTimestamp = stationMeasurements.reduce(
-      (max, item) => Math.max(max, item.zeitpunkt),
-      stationMeasurements[0].zeitpunkt,
-    );
-    const minDate = new Date(minTimestamp < 1_000_000_000_000 ? minTimestamp * 1000 : minTimestamp);
-    const maxDate = new Date(maxTimestamp < 1_000_000_000_000 ? maxTimestamp * 1000 : maxTimestamp);
-
-    return {
-      from: minDate.toISOString(),
-      to: maxDate.toISOString(),
-    };
-  }, [activeSelectedStation, rangeMeasurementsQuery.data]);
-  const hoveredSnapshot = useMemo<StationSnapshotResponse | null>(() => {
-    if (!activeHoveredStation || !rangeMeasurementsQuery.data) {
-      return null;
-    }
-
-    const readings = DISPLAY_COMPONENTS.flatMap((component) => {
-      const componentMeasurements = rangeMeasurementsQuery.data.messwerte.filter(
-        (measurement) =>
-          measurement.station === activeHoveredStation.code &&
-          measurement.komponente === component,
-      );
-
-      if (!componentMeasurements.length) {
-        return [];
-      }
-
-      const latest = componentMeasurements.reduce((currentLatest, candidate) =>
-        candidate.zeitpunkt > currentLatest.zeitpunkt ? candidate : currentLatest,
-      );
-      const normalizedTimestamp =
-        latest.zeitpunkt < 1_000_000_000_000 ? latest.zeitpunkt * 1000 : latest.zeitpunkt;
-
-      return [
-        {
-          station: activeHoveredStation.langname,
-          stationHash: `#${activeHoveredStation.kurzname.replace(/\s+/g, "-")}`,
-          component: component.replace("kont", ""),
-          mean: ACTUAL_MEAN,
-          limit: component === "NO2" ? 30 : component === "PM10kont" ? 50 : 25,
-          date: new Date(normalizedTimestamp),
-          value: (parseFloat(latest.messwert.replace(",", ".")) * 1000).toFixed(2),
-        },
-      ];
-    });
-
-    return {
-      stationCode: activeHoveredStation.code,
-      mean: ACTUAL_MEAN,
-      readings,
-    };
-  }, [activeHoveredStation, rangeMeasurementsQuery.data]);
+  const snapshot = useMemo<StationSnapshotResponse | null>(
+    () =>
+      activeSelectedStation && rangeMeasurementsQuery.data
+        ? buildSnapshot(activeSelectedStation, rangeMeasurementsQuery.data.messwerte)
+        : null,
+    [activeSelectedStation, rangeMeasurementsQuery.data],
+  );
+  const hoveredSnapshot = useMemo<StationSnapshotResponse | null>(
+    () =>
+      activeHoveredStation && rangeMeasurementsQuery.data
+        ? buildSnapshot(activeHoveredStation, rangeMeasurementsQuery.data.messwerte)
+        : null,
+    [activeHoveredStation, rangeMeasurementsQuery.data],
+  );
   const isLoading =
     stationsQuery.isPending ||
     (!!activeSelectedStation &&
@@ -391,7 +320,6 @@ export default function StationMap() {
           setDateTo("");
         }}
         onMeanChange={handleMeanChange}
-        actualDataRange={actualDataRange}
         weeklyMeasurements={
           activeSelectedStation
             ? (weeklyMeasurementsQuery.data?.messwerte ?? []).filter(

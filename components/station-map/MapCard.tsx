@@ -17,8 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FilterPopover } from "@/components/station-map/filter-popover";
-import { HoverPopupCard } from "@/components/station-map/hover-popup-card";
+import { FilterPopover } from "@/components/station-map/FilterPopover";
+import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
 import type {
   GroupedComponents,
   StationSnapshotResponse,

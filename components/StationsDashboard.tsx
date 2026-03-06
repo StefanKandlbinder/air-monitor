@@ -1,6 +1,6 @@
 import Link from "next/link";
-import StationMap from "@/components/station-map";
-import ThemeToggle from "@/components/theme-toggle";
+import StationMap from "@/components/StationMap";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

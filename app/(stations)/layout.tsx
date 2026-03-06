@@ -1,4 +1,4 @@
-import StationsDashboard from "@/components/stations-dashboard";
+import StationsDashboard from "@/components/StationsDashboard";
 
 export default function StationsLayout({
   children,
