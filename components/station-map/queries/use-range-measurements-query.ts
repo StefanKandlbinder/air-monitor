@@ -1,50 +1,64 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { MeanType } from "@/components/station-map/types";
-import type { Measurement } from "@/lib/types";
+import type { OpenAQMeasurement, Rollup } from "@/lib/types";
 
 type DateRange = {
-  datvon: string;
-  datbis: string;
+  dateFrom: string;
+  dateTo: string;
 };
 
-type RangeMeasurementsResponse = {
-  mean: MeanType;
-  datvon: string;
-  datbis: string;
-  messwerte: Measurement[];
+type MeasurementsResponse = {
+  locationId: number;
+  rollup: Rollup;
+  dateFrom: string;
+  dateTo: string;
+  measurements: OpenAQMeasurement[];
 };
 
-export function useRangeMeasurementsQuery(
-  mean: MeanType,
-  dateRange: DateRange | null,
+export function useMeasurementsQuery(
+  locationId: number | null,
+  rollup: Rollup,
+  dateRange: DateRange | null
 ) {
   return useQuery({
     queryKey: [
-      "range-measurements",
-      mean,
-      dateRange?.datvon ?? null,
-      dateRange?.datbis ?? null,
+      "measurements",
+      locationId,
+      rollup,
+      dateRange?.dateFrom ?? null,
+      dateRange?.dateTo ?? null,
     ],
-    enabled: !!dateRange,
+    enabled: !!locationId && !!dateRange,
+    staleTime: 1000 * 60 * 60,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message.includes("429")) {
+        return failureCount < 4;
+      }
+      return failureCount < 1;
+    },
+    retryDelay: (failureCount) => Math.min(2000 * 2 ** failureCount, 30000),
     queryFn: async () => {
-      if (!dateRange) {
-        throw new Error("Missing date range");
+      if (!locationId || !dateRange) {
+        throw new Error("Missing locationId or dateRange");
       }
 
       const searchParams = new URLSearchParams({
-        mean,
-        datvon: dateRange.datvon,
-        datbis: dateRange.datbis,
+        locationId: String(locationId),
+        rollup,
+        dateFrom: dateRange.dateFrom,
+        dateTo: dateRange.dateTo,
       });
 
-      const response = await fetch(`/api/measurements?${searchParams.toString()}`);
+      const response = await fetch(
+        `/api/measurements?${searchParams.toString()}`
+      );
       if (!response.ok) {
-        throw new Error("Could not load range measurements");
+        const body = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Could not load measurements");
       }
 
-      return (await response.json()) as RangeMeasurementsResponse;
+      return (await response.json()) as MeasurementsResponse;
     },
   });
 }

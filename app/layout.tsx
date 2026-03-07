@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
+import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
 import { GlobalToastListener } from "@/components/GlobalToastListener";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -21,7 +22,10 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <GlobalToastListener />
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <GlobalLoadingBar />
+            {children}
+          </QueryProvider>
           <Toaster position="bottom-left" />
         </ThemeProvider>
       </body>

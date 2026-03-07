@@ -1,40 +1,44 @@
-export type StationId = string;
-
-export type OfficialStation = {
-  code: string;
-  kurzname: string;
-  langname: string;
-  geoLaenge: number;
-  geoBreite: number;
-  komponentenCodes: string[];
+export type OpenAQParameter = {
+  id: number;
+  name: string;
+  displayName: string;
+  units: string;
 };
 
-export type Station = {
-  id: StationId;
-  value: {
-    name: string;
-    hash: string;
-  };
+export type OpenAQSensor = {
+  id: number;
+  name: string;
+  parameter: OpenAQParameter;
+  latestValue?: number | null;
 };
 
-export type Component = "NO2" | "PM10kont" | "PM25kont";
-export type Mean = "TMW" | "MW1" | "HMW";
-
-export type Measurement = {
-  zeitpunkt: number;
-  station: string;
-  komponente: string;
-  mittelwert: string;
-  einheit: string;
-  messwert: string;
+export type OpenAQLocation = {
+  id: number;
+  name: string;
+  locality: string | null;
+  country: { id: number; code: string; name: string };
+  coordinates: { latitude: number; longitude: number };
+  sensors: OpenAQSensor[];
+  timezone: string;
+  datetimeLast: { utc: string; local: string } | null;
 };
 
-export type AirDataResult = {
-  station: string;
-  stationHash: string;
-  component: string;
-  mean: string;
+export type OpenAQMeasurement = {
+  sensorId: number;
+  locationId: number;
+  parameter: string;
+  value: number;
+  unit: string;
+  timestamp: number; // Unix ms, start of period
+};
+
+export type Rollup = "hours" | "days";
+
+export type AirQualityReading = {
+  parameter: string;
+  displayName: string;
+  value: number;
+  unit: string;
   limit: number;
-  date: Date;
-  value: string;
+  timestamp: number; // Unix ms
 };

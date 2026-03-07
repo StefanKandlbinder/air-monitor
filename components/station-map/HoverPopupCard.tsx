@@ -1,6 +1,9 @@
 "use client";
 
-import { Layers, MapPin } from "lucide-react";
+import { useMemo } from "react";
+import dayjs from "dayjs";
+import { Clock, Layers, MapPin } from "lucide-react";
+import { aqiToLabel } from "@/lib/aqi-colors";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -9,79 +12,100 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { StationSnapshotResponse } from "@/components/station-map/types";
-import type { OfficialStation } from "@/lib/types";
-import { formatMeasurement } from "@/lib/utils";
+import type { OpenAQLocation } from "@/lib/types";
+
+const DISPLAY_PARAMS = ["no2", "pm10", "pm25"] as const;
+const PARAM_LABEL: Record<string, string> = { no2: "NO₂", pm10: "PM10", pm25: "PM2.5" };
 
 type HoverPopupCardProps = {
-  station: OfficialStation;
-  snapshot: StationSnapshotResponse | null;
-  isLoading: boolean;
+  location: OpenAQLocation;
+  aqiValue?: number;
+  aqiColor?: string;
+  latestValues?: Record<string, { value: number; units: string; timestamp?: string }>;
 };
 
-export function HoverPopupCard({
-  station,
-  snapshot,
-  isLoading,
-}: HoverPopupCardProps) {
+export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: HoverPopupCardProps) {
+  // Use the most recent measurement timestamp from latestValues; fall back to datetimeLast
+  const updatedAt = useMemo(() => {
+    if (latestValues) {
+      const timestamps = Object.values(latestValues)
+        .map((v) => v.timestamp)
+        .filter((t): t is string => !!t)
+        .map((t) => new Date(t).getTime())
+        .filter((t) => !isNaN(t));
+      if (timestamps.length > 0) return new Date(Math.max(...timestamps));
+    }
+    return location.datetimeLast?.utc ? new Date(location.datetimeLast.utc) : null;
+  }, [latestValues, location.datetimeLast]);
+
+  const readings = DISPLAY_PARAMS.map((param) => {
+    // Prefer API-fetched latest values; fall back to sensor.latestValue if present
+    const apiData = latestValues?.[param];
+    if (apiData) return { param, label: PARAM_LABEL[param], value: apiData.value, units: apiData.units };
+    const sensor = location.sensors.find(
+      (s) => s.parameter.name.toLowerCase() === param && s.latestValue != null
+    );
+    return sensor
+      ? { param, label: PARAM_LABEL[param], value: sensor.latestValue as number, units: sensor.parameter.units }
+      : null;
+  }).filter(Boolean) as { param: string; label: string; value: number; units: string }[];
+
+  const uniqueParams = Array.from(
+    new Set(location.sensors.map((s) => s.parameter.name.toLowerCase()))
+  );
+
   return (
-    <Card className="w-64">
-      <CardHeader className="space-y-1 px-3 pb-2 pt-3">
-        <CardTitle className="text-sm leading-tight">
-          {station.kurzname}
-        </CardTitle>
+    <Card className="w-56">
+      <CardHeader className="space-y-0.5 px-3 pb-2 pt-3">
+        <CardTitle className="text-sm leading-tight">{location.name}</CardTitle>
         <CardDescription className="flex items-center gap-1.5 text-[11px]">
           <MapPin className="h-3 w-3" />
-          {station.code}
+          {location.locality ?? location.country.name}
         </CardDescription>
+        {updatedAt ? (
+          <CardDescription className="flex items-center gap-1.5 text-[11px]">
+            <Clock className="h-3 w-3" />
+            {dayjs(updatedAt).format("DD.MM.YYYY HH:mm")}
+          </CardDescription>
+        ) : null}
+        {aqiColor && aqiValue != null ? (
+          <CardDescription className="flex items-center gap-1.5 text-[11px] font-medium">
+            <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: aqiColor }} />
+            AQI {aqiValue} · {aqiToLabel(aqiValue)}
+          </CardDescription>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-1.5 border-t border-border px-3 pb-3 pt-2">
-        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Layers className="h-3 w-3" />
-          Available components
-        </p>
-        <div className="flex flex-wrap gap-1">
-          {station.komponentenCodes.slice(0, 5).map((component) => (
-            <Badge
-              key={component}
-              variant="secondary"
-              className="px-1.5 py-0 text-[10px]"
-            >
-              {component}
-            </Badge>
-          ))}
-          {station.komponentenCodes.length > 5 ? (
-            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-              +{station.komponentenCodes.length - 5}
-            </Badge>
-          ) : null}
-        </div>
-        <div className="mt-2 space-y-1 border-t border-border pt-2">
-          <p className="text-[11px] text-muted-foreground">
-            Latest measurements
-          </p>
-          {isLoading ? (
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-            </div>
-          ) : snapshot?.readings?.length ? (
-            snapshot.readings.map((reading) => (
-              <div
-                key={`${reading.component}-${reading.mean}`}
-                className="flex items-center justify-between text-[11px]"
-              >
-                <span className="font-medium">{reading.component}</span>
-                <span>{formatMeasurement(reading.value)}</span>
+      <CardContent className="space-y-2 border-t border-border px-3 pb-3 pt-2">
+        {readings.length > 0 ? (
+          <div className="space-y-1">
+            {readings.map(({ param, label, value, units }) => (
+              <div key={param} className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-medium tabular-nums">
+                  {value.toFixed(1)}{" "}
+                  <span className="text-muted-foreground">{units}</span>
+                </span>
               </div>
-            ))
-          ) : (
-            <p className="text-[11px] text-muted-foreground">
-              No data in this time window.
-            </p>
-          )}
+            ))}
+          </div>
+        ) : null}
+        <div className="space-y-1">
+          <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Layers className="h-3 w-3" />
+            Available parameters
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {uniqueParams.slice(0, 6).map((param) => (
+              <Badge key={param} variant="secondary" className="px-1.5 py-0 text-[10px]">
+                {param}
+              </Badge>
+            ))}
+            {uniqueParams.length > 6 ? (
+              <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                +{uniqueParams.length - 6}
+              </Badge>
+            ) : null}
+          </div>
         </div>
       </CardContent>
     </Card>

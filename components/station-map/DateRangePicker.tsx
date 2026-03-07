@@ -1,4 +1,9 @@
-import { X } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -15,19 +20,20 @@ type DateRangePickerProps = {
   onClearDateRange: () => void;
 };
 
-function formatLocalDateOnly(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function getDatePart(iso: string): string {
+  return iso.slice(0, 10);
 }
 
-function getDatePart(value: string): string {
-  return value.slice(0, 10);
+function getTimePart(iso: string, fallback: string): string {
+  return iso.length >= 16 ? iso.slice(11, 16) : fallback;
 }
 
-function getTimePart(value: string, fallback: string): string {
-  return value.length >= 16 ? value.slice(11, 16) : fallback;
+function combineDateAndTime(date: Date, time: string): string {
+  return `${format(date, "yyyy-MM-dd")}T${time}`;
+}
+
+function isoToDate(iso: string): Date | undefined {
+  return iso ? parseISO(getDatePart(iso)) : undefined;
 }
 
 export function DateRangePicker({
@@ -37,120 +43,116 @@ export function DateRangePicker({
   onDateToChange,
   onClearDateRange,
 }: DateRangePickerProps) {
-  const selectedFromDate = dateFrom
-    ? new Date(`${getDatePart(dateFrom)}T00:00`)
-    : undefined;
-  const selectedToDate = dateTo
-    ? new Date(`${getDatePart(dateTo)}T00:00`)
-    : undefined;
+  const [open, setOpen] = useState(false);
 
-  const handleFromDateSelect = (date: Date | undefined): void => {
-    if (!date) {
-      onDateFromChange("");
-      return;
+  const [draftFrom, setDraftFrom] = useState<Date | undefined>(() => isoToDate(dateFrom));
+  const [draftTo, setDraftTo] = useState<Date | undefined>(() => isoToDate(dateTo));
+  const [draftFromTime, setDraftFromTime] = useState(() => getTimePart(dateFrom, "00:00"));
+  const [draftToTime, setDraftToTime] = useState(() => getTimePart(dateTo, "23:59"));
+
+  // Sync draft state when popover opens
+  useEffect(() => {
+    if (open) {
+      setDraftFrom(isoToDate(dateFrom));
+      setDraftTo(isoToDate(dateTo));
+      setDraftFromTime(getTimePart(dateFrom, "00:00"));
+      setDraftToTime(getTimePart(dateTo, "23:59"));
     }
-    const fromDate = formatLocalDateOnly(date);
-    const currentFromTime = getTimePart(dateFrom, "00:00");
-    onDateFromChange(`${fromDate}T${currentFromTime}`);
+  }, [open]);
+
+  const handleRangeSelect = (next: DateRange | undefined): void => {
+    setDraftFrom(next?.from);
+    setDraftTo(next?.to);
   };
 
-  const handleToDateSelect = (date: Date | undefined): void => {
-    if (!date) {
-      onDateToChange("");
-      return;
-    }
-    const toDate = formatLocalDateOnly(date);
-    const currentToTime = getTimePart(dateTo, "23:59");
-    onDateToChange(`${toDate}T${currentToTime}`);
+  const handleApply = (): void => {
+    if (draftFrom) onDateFromChange(combineDateAndTime(draftFrom, draftFromTime));
+    if (draftTo) onDateToChange(combineDateAndTime(draftTo, draftToTime));
+    setOpen(false);
   };
 
-  const handleFromTimeChange = (time: string): void => {
-    if (!dateFrom) return;
-    onDateFromChange(`${getDatePart(dateFrom)}T${time}`);
+  const handleReset = (): void => {
+    onClearDateRange();
+    setOpen(false);
   };
 
-  const handleToTimeChange = (time: string): void => {
-    if (!dateTo) return;
-    onDateToChange(`${getDatePart(dateTo)}T${time}`);
-  };
+  const committedFromDate = isoToDate(dateFrom);
+  const committedToDate = isoToDate(dateTo);
+  const committedFromTime = getTimePart(dateFrom, "00:00");
+  const committedToTime = getTimePart(dateTo, "23:59");
+
+  const label =
+    committedFromDate && committedToDate
+      ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – ${format(committedToDate, "MMM d, yyyy")} ${committedToTime}`
+      : committedFromDate
+        ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – …`
+        : "Select date range";
+
+  const canApply = !!draftFrom && !!draftTo;
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            className="w-fit shrink-0 justify-start"
-          >
-            {dateFrom
-              ? `Start: ${dateFrom.replace("T", " ")}`
-              : "Select start date/time"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedFromDate}
-            onSelect={handleFromDateSelect}
-          />
-          <div className="space-y-1 border-t p-3">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          className="w-fit justify-start font-normal"
+        >
+          <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
+          <span className="truncate">{label}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          selected={{ from: draftFrom, to: draftTo }}
+          onSelect={handleRangeSelect}
+          numberOfMonths={2}
+        />
+        <div className="grid grid-cols-2 gap-3 border-t p-3">
+          <div className="space-y-1">
             <label className="text-xs text-muted-foreground">Start time</label>
             <input
               type="time"
-              value={getTimePart(dateFrom, "00:00")}
-              onChange={(event) => handleFromTimeChange(event.target.value)}
-              disabled={!dateFrom}
+              value={draftFromTime}
+              onChange={(e) => setDraftFromTime(e.target.value)}
+              disabled={!draftFrom}
               className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
-              aria-label="Start time"
             />
           </div>
-        </PopoverContent>
-      </Popover>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            className="w-fit shrink-0 justify-start"
-          >
-            {dateTo
-              ? `End: ${dateTo.replace("T", " ")}`
-              : "Select end date/time"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedToDate}
-            onSelect={handleToDateSelect}
-          />
-          <div className="space-y-1 border-t p-3">
+          <div className="space-y-1">
             <label className="text-xs text-muted-foreground">End time</label>
             <input
               type="time"
-              value={getTimePart(dateTo, "23:59")}
-              onChange={(event) => handleToTimeChange(event.target.value)}
-              disabled={!dateTo}
+              value={draftToTime}
+              onChange={(e) => setDraftToTime(e.target.value)}
+              disabled={!draftTo}
               className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-60"
-              aria-label="End time"
             />
           </div>
-        </PopoverContent>
-      </Popover>
-      <Button
-        variant="outline"
-        size="icon"
-        type="button"
-        onClick={onClearDateRange}
-        aria-label="Clear date range"
-        title="Clear date range"
-        className="shrink-0"
-      >
-        <X className="h-4 w-4" />
-      </Button>
-    </div>
+        </div>
+        <div className="flex gap-2 border-t p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            className="flex-1 text-xs"
+            onClick={handleReset}
+          >
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            type="button"
+            className="flex-1 text-xs"
+            onClick={handleApply}
+            disabled={!canApply}
+          >
+            Apply
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

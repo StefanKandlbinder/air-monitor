@@ -1,202 +1,262 @@
 "use client";
 
-import { Cloud, Gauge, MapPin } from "lucide-react";
+import { Clock, Cloud, Info, MapPin } from "lucide-react";
 import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone";
-import utc from "dayjs/plugin/utc";
 import { Badge } from "@/components/ui/badge";
+import { aqiToColor, aqiToLabel } from "@/lib/aqi-colors";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/station-map/DateRangePicker";
+import { StationMapPreview } from "@/components/station-map/StationMapPreview";
 import { TrendChart } from "@/components/station-map/TrendChart";
-import type {
-  MeanType,
-  StationSnapshotResponse,
-} from "@/components/station-map/types";
-import type { Measurement, OfficialStation } from "@/lib/types";
-import { formatMeasurement } from "@/lib/utils";
+import type { StationSnapshotResponse } from "@/components/station-map/types";
+import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
+const PARAM_LABELS: Record<string, string> = {
+  pm25: "PM2.5",
+  pm10: "PM10",
+  o3: "O3",
+  co: "CO",
+  so2: "SO2",
+  no2: "NO2",
+};
+
 
 type DetailsPanelProps = {
   isLoading: boolean;
-  activeSelectedStation: OfficialStation | null;
+  activeSelectedLocation: OpenAQLocation | null;
+  locations: OpenAQLocation[];
   snapshot: StationSnapshotResponse | null;
-  mean: MeanType;
+  aqiColor?: string;
+  aqiValue?: number | null;
+  aqiSubIndices?: Record<string, number>;
+  rollup: Rollup;
   dateFrom: string;
   dateTo: string;
   onDateFromChange: (value: string) => void;
   onDateToChange: (value: string) => void;
   onClearDateRange: () => void;
-  onMeanChange: (mean: MeanType) => void;
-  weeklyMeasurements: Measurement[];
-  weeklyLoading: boolean;
+  onRollupChange: (rollup: Rollup) => void;
+  measurements: OpenAQMeasurement[];
+  measurementsLoading: boolean;
 };
 
 export function DetailsPanel({
   isLoading,
-  activeSelectedStation,
+  activeSelectedLocation,
+  locations,
   snapshot,
-  mean,
+  aqiColor,
+  aqiValue,
+  aqiSubIndices,
+  rollup,
   dateFrom,
   dateTo,
   onDateFromChange,
   onDateToChange,
   onClearDateRange,
-  onMeanChange,
-  weeklyMeasurements,
-  weeklyLoading,
+  onRollupChange,
+  measurements,
+  measurementsLoading,
 }: DetailsPanelProps) {
   const latestSnapshotDate = snapshot?.readings?.length
     ? snapshot.readings.reduce((latest, reading) => {
-        const readingDate = dayjs(reading.date);
-        return readingDate.isAfter(latest) ? readingDate : latest;
-      }, dayjs(snapshot.readings[0].date))
+        return reading.timestamp > latest ? reading.timestamp : latest;
+      }, snapshot.readings[0].timestamp)
     : null;
   const snapshotDate = latestSnapshotDate
-    ? latestSnapshotDate.tz("Europe/Vienna").format("DD.MM.YYYY HH:mm")
+    ? dayjs(latestSnapshotDate).format("DD.MM.YYYY HH:mm")
     : null;
 
   return (
-    <Card className="h-fit border-border/50 bg-card/80 backdrop-blur">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Gauge className="h-4 w-4" />
-          Station data
-        </CardTitle>
-        <CardDescription>
-          Click a marker on the map to load latest values.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-2/3" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
-        ) : null}
-        {!activeSelectedStation && !isLoading ? (
-          <p className="text-sm text-muted-foreground">
-            Click a marker to view current readings.
-          </p>
-        ) : null}
-
-        {activeSelectedStation && snapshot && !isLoading ? (
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold">
-                {activeSelectedStation.langname}
-              </h3>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{activeSelectedStation.code}</Badge>
-                <Badge variant="secondary">{snapshot.mean}</Badge>
+    <div className="space-y-4">
+      {/* Station info card */}
+      <Card className="border-border/50 bg-card/80 backdrop-blur">
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
-              {snapshotDate ? (
-                <p className="text-xs text-muted-foreground">
-                  Updated (Europe/Vienna): {snapshotDate}
-                </p>
-              ) : null}
+              <div className="grid grid-cols-1 gap-3">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {snapshot.readings.map((reading) => (
-                <Card
-                  key={`${reading.component}-${reading.mean}`}
-                  className="bg-background/50"
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Cloud className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-medium">
-                          {reading.component}
-                        </p>
-                      </div>
-                      <Badge className="font-mono" variant="outline">
-                        {reading.limit}
-                      </Badge>
-                    </div>
-                    <p className="mt-2 text-md font-semibold tracking-tight font-mono">
-                      {formatMeasurement(reading.value)}
+          ) : activeSelectedLocation && snapshot ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-[30%_1fr]">
+              {/* Left: station info + map */}
+              <div className="flex flex-col gap-4 min-w-0">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    {activeSelectedLocation.name}
+                  </h2>
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    {activeSelectedLocation.locality ?? activeSelectedLocation.country.name}
+                  </p>
+                  {snapshotDate ? (
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      {snapshotDate}
                     </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  ) : null}
+                  {aqiColor && aqiValue != null ? (
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <div
+                        className="h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: aqiColor }}
+                      />
+                      <span className="text-xs font-medium">
+                        AQI {aqiValue} · {aqiToLabel(aqiValue)}
+                      </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3" align="start">
+                          <p className="text-xs font-semibold mb-2">AQI Breakdown</p>
+                          {aqiSubIndices && Object.keys(aqiSubIndices).length > 0 ? (
+                            <div className="space-y-1.5">
+                              {Object.entries(aqiSubIndices)
+                                .sort(([, a], [, b]) => b - a)
+                                .map(([param, subIndex]) => {
+                                  const isDominant = subIndex === aqiValue;
+                                  return (
+                                    <div key={param} className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-1.5">
+                                        <div
+                                          className="h-2 w-2 rounded-full shrink-0"
+                                          style={{ backgroundColor: aqiToColor(subIndex) }}
+                                        />
+                                        <span className={`text-xs ${isDominant ? "font-semibold" : "text-muted-foreground"}`}>
+                                          {PARAM_LABELS[param] ?? param.toUpperCase()}
+                                        </span>
+                                      </div>
+                                      <span className={`text-xs font-mono ${isDominant ? "font-semibold" : "text-muted-foreground"}`}>
+                                        {subIndex}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">No breakdown available.</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground mt-2.5 border-t pt-2">
+                            AQI is the highest sub-index across all pollutants (US EPA formula).
+                          </p>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  ) : null}
+                </div>
 
-            <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Coordinates: {activeSelectedStation.geoBreite.toFixed(4)},{" "}
-              {activeSelectedStation.geoLaenge.toFixed(4)}
+                <div className="h-full min-h-[200px]">
+                  <StationMapPreview
+                    locations={locations}
+                    activeLocation={activeSelectedLocation}
+                    locationColors={
+                      aqiColor
+                        ? { [activeSelectedLocation.id]: aqiColor }
+                        : undefined
+                    }
+                  />
+                </div>
+
+              </div>
+
+              {/* Right: measurement cards */}
+              <div className="flex flex-col gap-3">
+                {snapshot.readings.map((reading) => {
+                  const subIndex = aqiSubIndices?.[reading.parameter];
+                  const cardColor = subIndex != null ? aqiToColor(subIndex) : null;
+                  return (
+                    <Card
+                      key={reading.parameter}
+                      className="bg-background/50"
+                      style={cardColor ? { borderColor: `${cardColor}40`, backgroundColor: `${cardColor}26` } : undefined}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-1.5">
+                            <Cloud className="h-3.5 w-3.5 text-muted-foreground" />
+                            <p className="text-sm font-medium">
+                              {reading.displayName}
+                            </p>
+                          </div>
+                          <Badge
+                            className="font-mono text-[10px]"
+                            variant="outline"
+                          >
+                            {reading.limit}
+                          </Badge>
+                        </div>
+                        <p className="text-2xl font-semibold tracking-tight font-mono">
+                          {reading.value.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {reading.unit}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No station selected.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Trend chart card */}
+      <Card className="border-border/50 bg-card/80 backdrop-blur">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex gap-2">
+            <DateRangePicker
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateFromChange={onDateFromChange}
+              onDateToChange={onDateToChange}
+              onClearDateRange={onClearDateRange}
+            />
+            <ButtonGroup aria-label="Aggregation period" className="shrink-0">
+              <Button
+                variant={rollup === "hours" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onRollupChange("hours")}
+                type="button"
+              >
+                Hourly
+              </Button>
+              <Button
+                variant={rollup === "days" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onRollupChange("days")}
+                type="button"
+              >
+                Daily
+              </Button>
+            </ButtonGroup>
           </div>
-        ) : null}
-
-        <div className="space-y-2 rounded-md border border-border/60 p-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            Station data controls
-          </p>
-          <ButtonGroup aria-label="Aggregation period" className="w-full">
-            <Button
-              variant={mean === "MW1" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onMeanChange("MW1")}
-              type="button"
-              className="flex-1"
-            >
-              Hourly (MW1)
-            </Button>
-            <Button
-              variant={mean === "TMW" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onMeanChange("TMW")}
-              type="button"
-              className="flex-1"
-            >
-              Daily (TMW)
-            </Button>
-            <Button
-              variant={mean === "HMW" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onMeanChange("HMW")}
-              type="button"
-              className="flex-1"
-            >
-              Half-hour (HMW)
-            </Button>
-          </ButtonGroup>
-          <DateRangePicker
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-            onDateFromChange={onDateFromChange}
-            onDateToChange={onDateToChange}
-            onClearDateRange={onClearDateRange}
-          />
-        </div>
-
-        <div className="space-y-2 rounded-md border border-border/60 p-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            Trend (selected range)
-          </p>
           <TrendChart
-            weeklyMeasurements={weeklyMeasurements}
-            weeklyLoading={weeklyLoading}
+            measurements={measurements}
+            measurementsLoading={measurementsLoading}
             dateFrom={dateFrom}
             dateTo={dateTo}
           />
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

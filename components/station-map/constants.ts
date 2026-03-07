@@ -1,40 +1,47 @@
-import type { GroupedComponents } from "@/components/station-map/types";
+import type { GroupedParameters } from "@/components/station-map/types";
 
 export const LIGHT_MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 export const DARK_MAP_STYLE =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-const LIGHT_COMPONENTS = new Set(["BOE", "SUN", "SOL", "LUX"]);
-const AIR_QUALITY_COMPONENTS = new Set([
-  "NO2",
-  "SO2",
-  "O3",
-  "CO",
-  "PM10kont",
-  "PM25kont",
-  "PM10",
-  "PM25",
+const AIR_QUALITY_PARAMS = new Set([
+  "no2",
+  "pm10",
+  "pm25",
+  "pm2.5",
+  "o3",
+  "so2",
+  "co",
+  "bc",
+  "co2",
 ]);
-const WIND_COMPONENTS = new Set(["WIV", "WIR", "WIG", "WISP"]);
 
-export function groupComponents(availableComponents: string[]): GroupedComponents {
-  const groups: GroupedComponents = {
-    light: [],
+const METEOROLOGICAL_PARAMS = new Set([
+  "temperature",
+  "humidity",
+  "pressure",
+  "wind_speed",
+  "wind_direction",
+  "dewpoint",
+]);
+
+export function groupParameters(
+  availableParameters: string[]
+): GroupedParameters {
+  const groups: GroupedParameters = {
     airQuality: [],
-    wind: [],
+    meteorological: [],
     other: [],
   };
 
-  for (const component of availableComponents) {
-    if (LIGHT_COMPONENTS.has(component)) {
-      groups.light.push(component);
-    } else if (AIR_QUALITY_COMPONENTS.has(component) || component.startsWith("PM")) {
-      groups.airQuality.push(component);
-    } else if (WIND_COMPONENTS.has(component) || component.startsWith("WI")) {
-      groups.wind.push(component);
+  for (const param of availableParameters) {
+    if (AIR_QUALITY_PARAMS.has(param)) {
+      groups.airQuality.push(param);
+    } else if (METEOROLOGICAL_PARAMS.has(param)) {
+      groups.meteorological.push(param);
     } else {
-      groups.other.push(component);
+      groups.other.push(param);
     }
   }
 

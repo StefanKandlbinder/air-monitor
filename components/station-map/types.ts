@@ -1,25 +1,18 @@
-import type { AirDataResult, OfficialStation } from "@/lib/types";
+import type { AirQualityReading, Rollup } from "@/lib/types";
 
 export type StationSnapshotResponse = {
-  stationCode: string;
-  mean: "MW1" | "TMW" | "HMW";
-  readings: AirDataResult[];
+  locationId: number;
+  rollup: Rollup;
+  readings: AirQualityReading[];
 };
 
-export type GroupedComponents = {
-  light: string[];
+export type GroupedParameters = {
   airQuality: string[];
-  wind: string[];
+  meteorological: string[];
   other: string[];
 };
-
-export type MeanType = "MW1" | "TMW" | "HMW";
 
 export type UserLocation = {
   latitude: number;
   longitude: number;
-};
-
-export type StationComponentProps = {
-  station: OfficialStation;
 };

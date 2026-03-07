@@ -1,19 +1,33 @@
 import { NextResponse } from "next/server";
-import { fetchOfficialStations } from "@/lib/station-service";
+import { openaqGet } from "@/lib/openaq";
+import type { OpenAQLocation } from "@/lib/types";
 
-const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
+type OpenAQLocationsResponse = {
+  meta: { found: number; page: number; limit: number };
+  results: OpenAQLocation[];
+};
 
-export const revalidate = 2_592_000;
+const LINZ_LAT = 48.3069;
+const LINZ_LON = 14.2858;
+const RADIUS_METERS = 25000;
+
+export const revalidate = 604800;
 
 export async function GET() {
   try {
-    const stations = await fetchOfficialStations();
+    const data = await openaqGet<OpenAQLocationsResponse>("/v3/locations", {
+      coordinates: `${LINZ_LAT},${LINZ_LON}`,
+      radius: String(RADIUS_METERS),
+      limit: "100",
+    });
+
     return NextResponse.json(
-      { stations },
+      { locations: data.results },
       {
         headers: {
-          "Cache-Control": `public, max-age=${ONE_MONTH_SECONDS}, s-maxage=${ONE_MONTH_SECONDS}, stale-while-revalidate=86400`
-        }
+          "Cache-Control":
+            "public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400",
+        },
       }
     );
   } catch (error) {

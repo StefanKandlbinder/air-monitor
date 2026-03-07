@@ -8,27 +8,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { GroupedComponents } from "@/components/station-map/types";
+import type { GroupedParameters } from "@/components/station-map/types";
 
 type FilterPopoverProps = {
-  groupedComponents: GroupedComponents;
-  selectedComponents: string[];
-  onToggleComponent: (component: string) => void;
+  groupedParameters: GroupedParameters;
+  selectedParameters: string[];
+  onToggleParameter: (parameter: string) => void;
   onClear: () => void;
 };
 
-function ComponentSection({
+function ParameterSection({
   title,
-  components,
-  selectedComponents,
-  onToggleComponent,
+  parameters,
+  selectedParameters,
+  onToggleParameter,
 }: {
   title: string;
-  components: string[];
-  selectedComponents: string[];
-  onToggleComponent: (component: string) => void;
+  parameters: string[];
+  selectedParameters: string[];
+  onToggleParameter: (parameter: string) => void;
 }) {
-  if (!components.length) {
+  if (!parameters.length) {
     return null;
   }
 
@@ -38,18 +38,18 @@ function ComponentSection({
         {title}
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {components.map((component) => {
-          const selected = selectedComponents.includes(component);
+        {parameters.map((parameter) => {
+          const selected = selectedParameters.includes(parameter);
           return (
             <Button
-              key={component}
+              key={parameter}
               variant={selected ? "default" : "outline"}
               size="sm"
               type="button"
               className="h-7 px-2 text-[11px]"
-              onClick={() => onToggleComponent(component)}
+              onClick={() => onToggleParameter(parameter)}
             >
-              {component}
+              {parameter}
             </Button>
           );
         })}
@@ -59,9 +59,9 @@ function ComponentSection({
 }
 
 export function FilterPopover({
-  groupedComponents,
-  selectedComponents,
-  onToggleComponent,
+  groupedParameters,
+  selectedParameters,
+  onToggleParameter,
   onClear,
 }: FilterPopoverProps) {
   return (
@@ -69,10 +69,10 @@ export function FilterPopover({
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" type="button">
           <Filter className="mr-1 h-3.5 w-3.5" />
-          Components
-          {selectedComponents.length ? (
+          Station parameters
+          {selectedParameters.length ? (
             <Badge variant="secondary" className="ml-1 px-1 py-0 text-[10px]">
-              {selectedComponents.length}
+              {selectedParameters.length}
             </Badge>
           ) : null}
         </Button>
@@ -80,9 +80,9 @@ export function FilterPopover({
       <PopoverContent align="start" className="w-80 p-3">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Filter stations by component
+            Filter stations by parameter
           </p>
-          {selectedComponents.length ? (
+          {selectedParameters.length ? (
             <Button
               variant="ghost"
               size="sm"
@@ -96,29 +96,23 @@ export function FilterPopover({
           ) : null}
         </div>
         <div className="max-h-56 space-y-3 overflow-auto pr-1">
-          <ComponentSection
+          <ParameterSection
             title="Air quality"
-            components={groupedComponents.airQuality}
-            selectedComponents={selectedComponents}
-            onToggleComponent={onToggleComponent}
+            parameters={groupedParameters.airQuality}
+            selectedParameters={selectedParameters}
+            onToggleParameter={onToggleParameter}
           />
-          <ComponentSection
-            title="Light"
-            components={groupedComponents.light}
-            selectedComponents={selectedComponents}
-            onToggleComponent={onToggleComponent}
+          <ParameterSection
+            title="Meteorological"
+            parameters={groupedParameters.meteorological}
+            selectedParameters={selectedParameters}
+            onToggleParameter={onToggleParameter}
           />
-          <ComponentSection
-            title="Wind"
-            components={groupedComponents.wind}
-            selectedComponents={selectedComponents}
-            onToggleComponent={onToggleComponent}
-          />
-          <ComponentSection
+          <ParameterSection
             title="Other"
-            components={groupedComponents.other}
-            selectedComponents={selectedComponents}
-            onToggleComponent={onToggleComponent}
+            parameters={groupedParameters.other}
+            selectedParameters={selectedParameters}
+            onToggleParameter={onToggleParameter}
           />
         </div>
       </PopoverContent>

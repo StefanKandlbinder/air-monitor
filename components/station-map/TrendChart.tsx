@@ -16,7 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Measurement } from "@/lib/types";
+import type { OpenAQMeasurement } from "@/lib/types";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -29,15 +29,15 @@ function formatChartValue(value: number): string {
 }
 
 type TrendChartProps = {
-  weeklyMeasurements: Measurement[];
-  weeklyLoading: boolean;
+  measurements: OpenAQMeasurement[];
+  measurementsLoading: boolean;
   dateFrom: string;
   dateTo: string;
 };
 
 export function TrendChart({
-  weeklyMeasurements,
-  weeklyLoading,
+  measurements,
+  measurementsLoading,
   dateFrom,
   dateTo,
 }: TrendChartProps) {
@@ -45,28 +45,29 @@ export function TrendChart({
   const isDark = resolvedTheme === "dark";
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
 
-  const weeklyTrendData = Array.from(
-    weeklyMeasurements
-      .reduce((acc, item) => {
-        const timestamp =
-          item.zeitpunkt < 1_000_000_000_000
-            ? item.zeitpunkt * 1000
-            : item.zeitpunkt;
-        const current = acc.get(timestamp) ?? { timestamp };
-        const value = parseFloat(item.messwert.replace(",", ".")) * 1000;
+  const trendData = Array.from(
+    measurements
+      .reduce(
+        (acc, item) => {
+          const current = acc.get(item.timestamp) ?? { timestamp: item.timestamp };
 
-        if (item.komponente === "NO2") {
-          current.no2 = value;
-        } else if (item.komponente === "PM10kont") {
-          current.pm10 = value;
-        } else if (item.komponente === "PM25kont") {
-          current.pm25 = value;
-        }
+          if (item.parameter === "no2") {
+            current.no2 = item.value;
+          } else if (item.parameter === "pm10") {
+            current.pm10 = item.value;
+          } else if (item.parameter === "pm25") {
+            current.pm25 = item.value;
+          }
 
-        acc.set(timestamp, current);
-        return acc;
-      }, new Map<number, { timestamp: number; no2?: number; pm10?: number; pm25?: number }>())
-      .values(),
+          acc.set(item.timestamp, current);
+          return acc;
+        },
+        new Map<
+          number,
+          { timestamp: number; no2?: number; pm10?: number; pm25?: number }
+        >()
+      )
+      .values()
   ).sort((a, b) => a.timestamp - b.timestamp);
 
   const selectedFromTimestamp = dateFrom ? dayjs(dateFrom).valueOf() : Number.NaN;
@@ -81,7 +82,11 @@ export function TrendChart({
   const renderChartTooltip = (props: unknown) => {
     const { active, payload, label } = (props ?? {}) as {
       active?: boolean;
-      payload?: ReadonlyArray<{ name?: string; value?: number | string; color?: string }>;
+      payload?: ReadonlyArray<{
+        name?: string;
+        value?: number | string;
+        color?: string;
+      }>;
       label?: number | string;
     };
 
@@ -130,14 +135,14 @@ export function TrendChart({
     setHiddenSeries((current) => ({ ...current, [dataKey]: !current[dataKey] }));
   };
 
-  if (weeklyLoading) {
+  if (measurementsLoading) {
     return <Skeleton className="h-48 w-full" />;
   }
 
-  if (!weeklyTrendData.length) {
+  if (!trendData.length) {
     return (
       <p className="text-xs text-muted-foreground">
-        No weekly MW1 data available.
+        No data available for selected range.
       </p>
     );
   }
@@ -145,7 +150,7 @@ export function TrendChart({
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={weeklyTrendData}>
+        <LineChart data={trendData}>
           <XAxis
             dataKey="timestamp"
             type="number"

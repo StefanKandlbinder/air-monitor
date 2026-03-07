@@ -1,242 +1,215 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MapRef } from "react-map-gl/maplibre";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { useRangeMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
-import { groupComponents, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
-import { DetailsPanel } from "@/components/station-map/DetailsPanel";
+import { groupParameters, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
 import { MapCard } from "@/components/station-map/MapCard";
-import type { MeanType, StationSnapshotResponse, UserLocation } from "@/components/station-map/types";
-import type { OfficialStation } from "@/lib/types";
-
-function resolveRoutePeriod(period?: string): MeanType | null {
-  if (!period) {
-    return null;
-  }
-
-  const value = period.toLowerCase();
-  if (value === "mw1" || value === "hourly" || value === "hour") {
-    return "MW1";
-  }
-
-  if (value === "tmw" || value === "daily" || value === "day") {
-    return "TMW";
-  }
-
-  if (value === "hmw" || value === "halfhour" || value === "half-hour") {
-    return "HMW";
-  }
-
-  return null;
-}
-
-function toUpperAustriaDateParam(value: string): string {
-  return value.replace("T", " ");
-}
-
-function buildLastWeekRange(): { datvon: string; datbis: string } {
-  const from = new Date();
-  const to = new Date();
-  from.setDate(from.getDate() - 7);
-
-  const format = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
-
-  return { datvon: format(from), datbis: format(to) };
-}
-
-const DISPLAY_COMPONENTS = ["NO2", "PM10kont", "PM25kont"] as const;
-const ACTUAL_MEAN: MeanType = "MW1";
-
-function buildSnapshot(
-  station: OfficialStation,
-  messwerte: { station: string; komponente: string; zeitpunkt: number; messwert: string }[],
-): StationSnapshotResponse {
-  const readings = DISPLAY_COMPONENTS.flatMap((component) => {
-    const componentMeasurements = messwerte.filter(
-      (m) => m.station === station.code && m.komponente === component,
-    );
-
-    if (!componentMeasurements.length) {
-      return [];
-    }
-
-    const latest = componentMeasurements.reduce((currentLatest, candidate) =>
-      candidate.zeitpunkt > currentLatest.zeitpunkt ? candidate : currentLatest,
-    );
-    const normalizedTimestamp =
-      latest.zeitpunkt < 1_000_000_000_000 ? latest.zeitpunkt * 1000 : latest.zeitpunkt;
-
-    return [
-      {
-        station: station.langname,
-        stationHash: `#${station.kurzname.replace(/\s+/g, "-")}`,
-        component: component.replace("kont", ""),
-        mean: ACTUAL_MEAN,
-        limit: component === "NO2" ? 30 : component === "PM10kont" ? 50 : 25,
-        date: new Date(normalizedTimestamp),
-        value: (parseFloat(latest.messwert.replace(",", ".")) * 1000).toFixed(2),
-      },
-    ];
-  });
-
-  return { stationCode: station.code, mean: ACTUAL_MEAN, readings };
-}
+import type { PlaceSelection } from "@/components/station-map/LocationSearch";
+import type { UserLocation } from "@/components/station-map/types";
+import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
   const router = useRouter();
   const params = useParams<{ id?: string; period?: string }>();
-  const routeStationCode =
+  const routeLocationId =
     typeof params.id === "string" && params.id.trim()
-      ? params.id.toUpperCase()
+      ? Number(params.id)
       : null;
-  const routeMean = resolveRoutePeriod(
-    typeof params.period === "string" ? params.period : undefined,
-  );
+  const routePeriod =
+    typeof params.period === "string" ? params.period : "hours";
+
   const mapRef = useRef<MapRef | null>(null);
   const { resolvedTheme } = useTheme();
-  const [localSelectedStationCode, setLocalSelectedStationCode] = useState<string | null>(
-    null,
-  );
-  const [hoveredStation, setHoveredStation] = useState<OfficialStation | null>(
-    null,
-  );
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [selectedComponents, setSelectedComponents] = useState<string[]>([]);
-  const [localMean, setLocalMean] = useState<MeanType>("MW1");
-  const [weeklyRange] = useState(() => buildLastWeekRange());
-  const [dateFrom, setDateFrom] = useState(() =>
-    weeklyRange.datvon.replace(" ", "T"),
-  );
-  const [dateTo, setDateTo] = useState(() =>
-    weeklyRange.datbis.replace(" ", "T"),
-  );
-  const selectedStationCode = routeStationCode ?? localSelectedStationCode;
-  const mean = routeMean ?? localMean;
-  const activeDateRange =
-    dateFrom && dateTo
-      ? {
-          datvon: toUpperAustriaDateParam(dateFrom),
-          datbis: toUpperAustriaDateParam(dateTo),
-        }
-      : null;
-  const stationsQuery = useQuery({
-    queryKey: ["stations"],
+  const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
+  const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
+  const [isLoadingStations, setIsLoadingStations] = useState(false);
+
+  const locationsQuery = useQuery({
+    queryKey: ["locations"],
     queryFn: async () => {
       const response = await fetch("/api/stations");
-      if (!response.ok) {
-        throw new Error("Could not load stations");
-      }
-      const data = (await response.json()) as { stations: OfficialStation[] };
-      return data.stations;
+      if (!response.ok) throw new Error("Could not load stations");
+      const data = (await response.json()) as { locations: OpenAQLocation[] };
+      return data.locations;
     },
-    staleTime: 1000 * 60 * 60 * 24 * 30,
+    staleTime: 1000 * 60 * 60 * 24 * 7,
   });
 
-  const stations = useMemo(
-    () => stationsQuery.data ?? [],
-    [stationsQuery.data],
+  const locations = useMemo(
+    () => searchLocations ?? locationsQuery.data ?? [],
+    [searchLocations, locationsQuery.data]
   );
-  const availableComponents = useMemo(() => {
-    const components = new Set<string>();
-    for (const station of stations) {
-      for (const component of station.komponentenCodes) {
-        components.add(component);
+
+  const availableParameters = useMemo(() => {
+    const parameters = new Set<string>();
+    for (const location of locations) {
+      for (const sensor of location.sensors) {
+        parameters.add(sensor.parameter.name.toLowerCase());
       }
     }
-    return Array.from(components).sort((a, b) => a.localeCompare(b));
-  }, [stations]);
-  const groupedComponents = useMemo(
-    () => groupComponents(availableComponents),
-    [availableComponents],
-  );
-  const filteredStations = useMemo(() => {
-    if (!selectedComponents.length) {
-      return stations;
-    }
+    return Array.from(parameters).sort();
+  }, [locations]);
 
-    return stations.filter((station) =>
-      selectedComponents.every((component) =>
-        station.komponentenCodes.includes(component),
-      ),
+  const groupedParameters = useMemo(
+    () => groupParameters(availableParameters),
+    [availableParameters]
+  );
+
+  const AQI_PARAMS = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);
+
+  const aqiLocations = useMemo(() => {
+    return locations
+      .map((location) => ({
+        locationId: location.id,
+        sensors: location.sensors
+          .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
+          .map((s) => ({
+            sensorId: s.id,
+            param: s.parameter.name.toLowerCase() === "pm2.5" ? "pm25" : s.parameter.name.toLowerCase(),
+            units: s.parameter.units,
+          })),
+      }))
+      .filter((l) => l.sensors.length > 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locations]);
+
+  const aqiQuery = useQuery({
+    queryKey: ["aqi", aqiLocations],
+    enabled: aqiLocations.length > 0,
+    staleTime: 1000 * 60 * 60,
+    queryFn: async () => {
+      const res = await fetch("/api/aqi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locations: aqiLocations }),
+      });
+      if (!res.ok) throw new Error("Could not load AQI");
+      return (await res.json()) as {
+        colors: Record<number, string>;
+        aqiValues: Record<number, number>;
+        latestValues: Record<number, Record<string, { value: number; units: string }>>;
+      };
+    },
+  });
+
+  const filteredLocations = useMemo(() => {
+    if (!selectedParameters.length) return locations;
+    return locations.filter((location) =>
+      selectedParameters.every((param) =>
+        location.sensors.some((s) => s.parameter.name.toLowerCase() === param)
+      )
     );
-  }, [selectedComponents, stations]);
-  const visibleStationCodes = useMemo(
-    () => new Set(filteredStations.map((station) => station.code)),
-    [filteredStations],
-  );
-  const selectedStation = useMemo(
-    () =>
-      selectedStationCode
-        ? stations.find((station) => station.code === selectedStationCode) ?? null
-        : null,
-    [selectedStationCode, stations],
-  );
-  const activeSelectedStation =
-    selectedStation && visibleStationCodes.has(selectedStation.code)
-      ? selectedStation
-      : null;
-  const activeHoveredStation =
-    hoveredStation && visibleStationCodes.has(hoveredStation.code)
-      ? hoveredStation
-      : null;
-  const rangeMeasurementsQuery = useRangeMeasurementsQuery(ACTUAL_MEAN, activeDateRange);
-  const statisticsRange = activeDateRange ?? weeklyRange;
-  const weeklyMeasurementsQuery = useRangeMeasurementsQuery(mean, statisticsRange);
-  const snapshot = useMemo<StationSnapshotResponse | null>(
-    () =>
-      activeSelectedStation && rangeMeasurementsQuery.data
-        ? buildSnapshot(activeSelectedStation, rangeMeasurementsQuery.data.messwerte)
-        : null,
-    [activeSelectedStation, rangeMeasurementsQuery.data],
-  );
-  const hoveredSnapshot = useMemo<StationSnapshotResponse | null>(
-    () =>
-      activeHoveredStation && rangeMeasurementsQuery.data
-        ? buildSnapshot(activeHoveredStation, rangeMeasurementsQuery.data.messwerte)
-        : null,
-    [activeHoveredStation, rangeMeasurementsQuery.data],
-  );
-  const isLoading =
-    stationsQuery.isPending ||
-    (!!activeSelectedStation &&
-      (rangeMeasurementsQuery.isPending || rangeMeasurementsQuery.isFetching));
+  }, [selectedParameters, locations]);
+
   const mapStyle = resolvedTheme === "dark" ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
 
-  const mapCenter = useMemo(() => {
-    if (!filteredStations.length) {
-      return { longitude: 14.2858, latitude: 48.3069, zoom: 10 };
-    }
+  const hasFlownToDataRef = useRef(false);
 
+  // On initial load, fly to the centroid of all default stations once.
+  useEffect(() => {
+    if (searchLocations) return; // don't override a search fly
+    if (!filteredLocations.length || hasFlownToDataRef.current) return;
+    hasFlownToDataRef.current = true;
     const longitude =
-      filteredStations.reduce((acc, station) => acc + station.geoLaenge, 0) /
-      filteredStations.length;
+      filteredLocations.reduce((acc, l) => acc + l.coordinates.longitude, 0) /
+      filteredLocations.length;
     const latitude =
-      filteredStations.reduce((acc, station) => acc + station.geoBreite, 0) /
-      filteredStations.length;
+      filteredLocations.reduce((acc, l) => acc + l.coordinates.latitude, 0) /
+      filteredLocations.length;
+    mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 9.5, duration: 800 });
+  }, [filteredLocations, searchLocations]);
 
-    return { longitude, latitude, zoom: 9.5 };
-  }, [filteredStations]);
+  const [mapCenter] = useState(() => {
+    if (typeof window === "undefined") {
+      return { longitude: 14.2978, latitude: 48.3233, zoom: 12 };
+    }
+    const sp = new URLSearchParams(window.location.search);
+    const lat = sp.get("lat");
+    const lng = sp.get("lng");
+    const zoom = sp.get("zoom");
+    return {
+      longitude: lng ? parseFloat(lng) : 14.2978,
+      latitude: lat ? parseFloat(lat) : 48.3233,
+      zoom: zoom ? parseFloat(zoom) : 12,
+    };
+  });
 
-  const toggleComponentFilter = (component: string): void => {
-    setSelectedComponents((current) =>
-      current.includes(component)
-        ? current.filter((item) => item !== component)
-        : [...current, component],
+  const fetchStationsAt = useCallback((lat: string, lng: string) => {
+    setIsLoadingStations(true);
+    fetch(`/api/search?lat=${lat}&lon=${lng}`)
+      .then((res) => {
+        if (!res.ok) return res.json().then((b: { error?: string }) => Promise.reject(new Error(b.error ?? `Server error ${res.status}`)));
+        return res.json() as Promise<{ locations: OpenAQLocation[] }>;
+      })
+      .then((data) => setSearchLocations(data.locations))
+      .catch((err) => {
+        toast.error("Could not load stations for this location.", {
+          description: err instanceof Error ? err.message : undefined,
+        });
+      })
+      .finally(() => setIsLoadingStations(false));
+  }, []);
+
+  // On mount: if URL has lat/lng params, fetch stations at those coordinates
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const lat = sp.get("lat");
+    const lng = sp.get("lng");
+    if (lat && lng) fetchStationsAt(lat, lng);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const buildLocationParams = (center: { longitude: number; latitude: number; zoom: number }) =>
+    new URLSearchParams({
+      lat: center.latitude.toFixed(4),
+      lng: center.longitude.toFixed(4),
+      zoom: center.zoom.toFixed(1),
+    }).toString();
+
+  // Continuous pan/zoom — replace in place, no history entry
+  const handleMoveEnd = (center: { longitude: number; latitude: number; zoom: number }): void => {
+    window.history.replaceState(null, "", `?${buildLocationParams(center)}`);
+  };
+
+  // Intentional "go to" — push so back button restores previous position
+  const pushLocation = (center: { longitude: number; latitude: number; zoom: number }): void => {
+    window.history.pushState(null, "", `?${buildLocationParams(center)}`);
+  };
+
+  // Respond to browser back/forward — fly the map and re-fetch stations
+  useEffect(() => {
+    const onPopState = () => {
+      const sp = new URLSearchParams(window.location.search);
+      const lat = sp.get("lat");
+      const lng = sp.get("lng");
+      const zoom = sp.get("zoom");
+      if (lat && lng) {
+        if (zoom) {
+          mapRef.current?.flyTo({
+            center: [parseFloat(lng), parseFloat(lat)],
+            zoom: parseFloat(zoom),
+            duration: 600,
+          });
+        }
+        fetchStationsAt(lat, lng);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [fetchStationsAt]);
+
+  const toggleParameterFilter = (parameter: string): void => {
+    setSelectedParameters((current) =>
+      current.includes(parameter)
+        ? current.filter((item) => item !== parameter)
+        : [...current, parameter]
     );
   };
 
@@ -249,7 +222,6 @@ export default function StationMap() {
     }
 
     setIsLocating(true);
-
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const nextLocation: UserLocation = {
@@ -257,6 +229,7 @@ export default function StationMap() {
           longitude: position.coords.longitude,
         };
         setUserLocation(nextLocation);
+        pushLocation({ ...nextLocation, zoom: 12 });
         mapRef.current?.flyTo({
           center: [nextLocation.longitude, nextLocation.latitude],
           zoom: 12,
@@ -270,65 +243,72 @@ export default function StationMap() {
         });
         setIsLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
     );
   };
 
-  const handleStationSelect = (station: OfficialStation): void => {
-    setLocalSelectedStationCode(station.code);
-    router.push(`/station/${station.code}/${mean}`);
+  const handleLocationSelect = (location: OpenAQLocation): void => {
+    const period =
+      routeLocationId !== null && routePeriod ? routePeriod : "hours";
+    router.push(`/station/${location.id}/${period}`);
   };
 
-  const handleMeanChange = (nextMean: MeanType): void => {
-    setLocalMean(nextMean);
-    if (selectedStationCode) {
-      router.push(`/station/${selectedStationCode}/${nextMean}`);
+  const handlePlaceSelect = async (place: PlaceSelection): Promise<void> => {
+    mapRef.current?.flyTo({
+      center: [place.lon, place.lat],
+      zoom: 10,
+      duration: 1000,
+    });
+    pushLocation({ longitude: place.lon, latitude: place.lat, zoom: 10 });
+
+    setIsLoadingStations(true);
+    try {
+      const res = await fetch(`/api/search?lat=${place.lat}&lon=${place.lon}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Server error ${res.status}`);
+      }
+      const data = (await res.json()) as { locations: OpenAQLocation[] };
+      setSearchLocations(data.locations);
+      setSelectedParameters([]);
+      if (data.locations.length === 0) {
+        toast.info("No stations found within 25 km of this location.");
+      }
+    } catch (err) {
+      toast.error("Could not load stations for this location.", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setIsLoadingStations(false);
     }
   };
 
+  const handleClearSearch = (): void => {
+    setSearchLocations(null);
+    hasFlownToDataRef.current = false; // allow re-fly to default centroid
+  };
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.8fr_1fr]">
-      <MapCard
-        mapRef={mapRef}
-        mapCenter={mapCenter}
-        mapStyle={mapStyle}
-        filteredStations={filteredStations}
-        activeHoveredStation={activeHoveredStation}
-        hoveredSnapshot={hoveredSnapshot}
-        hoveredSnapshotLoading={rangeMeasurementsQuery.isPending || rangeMeasurementsQuery.isFetching}
-        selectedComponents={selectedComponents}
-        groupedComponents={groupedComponents}
-        isLocating={isLocating}
-        userLocation={userLocation}
-        onToggleComponent={toggleComponentFilter}
-        onClearComponents={() => setSelectedComponents([])}
-        onCenterOnUserLocation={centerOnUserLocation}
-        onSelectStation={handleStationSelect}
-        onHoverStationChange={setHoveredStation}
-      />
-      <DetailsPanel
-        isLoading={isLoading}
-        activeSelectedStation={activeSelectedStation}
-        snapshot={snapshot}
-        mean={mean}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onDateFromChange={setDateFrom}
-        onDateToChange={setDateTo}
-        onClearDateRange={() => {
-          setDateFrom("");
-          setDateTo("");
-        }}
-        onMeanChange={handleMeanChange}
-        weeklyMeasurements={
-          activeSelectedStation
-            ? (weeklyMeasurementsQuery.data?.messwerte ?? []).filter(
-                (item) => item.station === activeSelectedStation.code,
-              )
-            : []
-        }
-        weeklyLoading={weeklyMeasurementsQuery.isPending || weeklyMeasurementsQuery.isFetching}
-      />
-    </div>
+    <MapCard
+      mapRef={mapRef}
+      mapCenter={mapCenter}
+      mapStyle={mapStyle}
+      filteredLocations={filteredLocations}
+      selectedParameters={selectedParameters}
+      groupedParameters={groupedParameters}
+      isLocating={isLocating}
+      userLocation={userLocation}
+      isLoadingStations={isLoadingStations}
+      onToggleParameter={toggleParameterFilter}
+      onClearParameters={() => setSelectedParameters([])}
+      onCenterOnUserLocation={centerOnUserLocation}
+      locationColors={aqiQuery.data?.colors}
+      locationAqiValues={aqiQuery.data?.aqiValues}
+      locationLatestValues={aqiQuery.data?.latestValues}
+      onSelectLocation={handleLocationSelect}
+      onSelectPlace={handlePlaceSelect}
+      onClearSearch={handleClearSearch}
+      onMoveEnd={handleMoveEnd}
+    />
   );
 }
