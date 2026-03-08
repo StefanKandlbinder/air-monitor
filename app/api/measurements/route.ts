@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
+import { AQI_PARAMS, normalizeParam } from "@/lib/aqi";
 import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";
 
 export const revalidate = 3600;
-
-const AIR_QUALITY_PARAMS = new Set(["no2", "pm10", "pm25", "pm2.5"]);
-
-function normalizeParam(name: string): string {
-  return name === "pm2.5" ? "pm25" : name;
-}
 
 type SensorDataResult = {
   period: {
@@ -65,7 +60,7 @@ export async function GET(request: Request) {
 
     const location = locationData.results[0];
     const airQualitySensors = location.sensors.filter((sensor) =>
-      AIR_QUALITY_PARAMS.has(sensor.parameter.name.toLowerCase())
+      AQI_PARAMS.has(sensor.parameter.name.toLowerCase())
     );
 
     // Hourly uses datetime_from/datetime_to; daily uses date_from/date_to

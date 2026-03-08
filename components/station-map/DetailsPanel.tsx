@@ -18,16 +18,8 @@ import { DateRangePicker } from "@/components/station-map/DateRangePicker";
 import { StationMapPreview } from "@/components/station-map/StationMapPreview";
 import { TrendChart } from "@/components/station-map/TrendChart";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
+import { PARAM_LABELS } from "@/lib/aqi";
 import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";
-
-const PARAM_LABELS: Record<string, string> = {
-  pm25: "PM2.5",
-  pm10: "PM10",
-  o3: "O3",
-  co: "CO",
-  so2: "SO2",
-  no2: "NO2",
-};
 
 type DetailsPanelProps = {
   isLoading: boolean;

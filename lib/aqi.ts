@@ -3,6 +3,15 @@ import type { OpenAQLocation } from "@/lib/types";
 
 export const AQI_PARAMS = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);
 
+export function normalizeParam(name: string): string {
+  const lower = name.toLowerCase();
+  return lower === "pm2.5" ? "pm25" : lower;
+}
+
+export const PARAM_LABELS: Record<string, string> = {
+  pm25: "PM2.5", pm10: "PM10", o3: "O3", co: "CO", so2: "SO2", no2: "NO2",
+};
+
 // EPA AQI breakpoints: [C_low, C_high, I_low, I_high]
 const BP_PM25  = [[0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],[55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,350.4,301,400],[350.5,500.4,401,500]];
 const BP_PM10  = [[0,54,0,50],[55,154,51,100],[155,254,101,150],[255,354,151,200],[355,424,201,300],[425,504,301,400],[505,604,401,500]];
@@ -59,7 +68,7 @@ export function getAqiSensors(
     .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
     .map((s) => ({
       sensorId: s.id,
-      param: s.parameter.name.toLowerCase() === "pm2.5" ? "pm25" : s.parameter.name.toLowerCase(),
+      param: normalizeParam(s.parameter.name),
       units: s.parameter.units,
     }));
 }

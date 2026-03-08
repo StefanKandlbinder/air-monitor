@@ -7,21 +7,15 @@ import { useMeasurementsQuery } from "@/components/station-map/queries/use-range
 import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
-import { getAqiSensors } from "@/lib/aqi";
+import { getAqiSensors, PARAM_LABELS } from "@/lib/aqi";
+import { HOUR_MS, floorToHourIso } from "@/lib/time";
 import type { AirQualityReading, Rollup } from "@/lib/types";
 
 const PARAMETER_LIMITS: Record<string, number> = { no2: 30, pm10: 50, pm25: 25 };
-const PARAMETER_DISPLAY_NAMES: Record<string, string> = { no2: "NO2", pm10: "PM10", pm25: "PM2.5" };
-
-const HOUR_MS = 60 * 60 * 1000;
-
-function floorToHour(ms: number): string {
-  return new Date(Math.floor(ms / HOUR_MS) * HOUR_MS).toISOString();
-}
 
 function buildLastWeekRange(): { dateFrom: string; dateTo: string } {
   const now = Date.now();
-  return { dateFrom: floorToHour(now - 7 * 24 * HOUR_MS), dateTo: floorToHour(now) };
+  return { dateFrom: floorToHourIso(now - 7 * 24 * HOUR_MS), dateTo: floorToHourIso(now) };
 }
 
 function resolveRollup(period: string): Rollup {
@@ -110,7 +104,7 @@ export default function StationDetails() {
         const { value, units, timestamp } = v as { value: number; units: string; timestamp?: string };
         return {
           parameter,
-          displayName: PARAMETER_DISPLAY_NAMES[parameter] ?? parameter.toUpperCase(),
+          displayName: PARAM_LABELS[parameter] ?? parameter.toUpperCase(),
           value,
           unit: units,
           limit: PARAMETER_LIMITS[parameter],

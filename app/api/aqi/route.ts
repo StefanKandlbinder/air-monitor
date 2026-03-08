@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
 import { aqiToColor, AQI_COLORS } from "@/lib/aqi-colors";
-import { calcSubIndex } from "@/lib/aqi";
+import { calcSubIndex, normalizeParam } from "@/lib/aqi";
+import { floorToHour, toHourIso } from "@/lib/time";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,14 +26,6 @@ type SensorHoursResponse = { results: SensorHoursResult[] };
 // Helpers
 // ---------------------------------------------------------------------------
 
-function floorToHour(date: Date): Date {
-  return new Date(Math.floor(date.getTime() / 3_600_000) * 3_600_000);
-}
-
-/** Format a Date as a clean full-hour ISO string: YYYY-MM-DDTHH:00:00Z */
-function toHourIso(date: Date): string {
-  return date.toISOString().slice(0, 13) + ":00:00Z";
-}
 
 async function fetchLatest(sensorId: number): Promise<{ value: number; timestamp: string } | null> {
   const hourStart = floorToHour(new Date());
@@ -106,7 +99,7 @@ export async function POST(request: Request) {
 
     const sensorResults = await withConcurrency(
       allSensorTasks.map(({ sensorId, param: rawParam, units, locationId }) => async () => {
-        const param = rawParam.toLowerCase() === "pm2.5" ? "pm25" : rawParam.toLowerCase();
+        const param = normalizeParam(rawParam);
         const result = await fetchLatest(sensorId);
         if (result === null) return null;
         const { value, timestamp } = result;

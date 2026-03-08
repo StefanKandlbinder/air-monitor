@@ -31,6 +31,7 @@ type MapCardProps = {
   isLocating: boolean;
   userLocation: UserLocation | null;
   isLoadingStations: boolean;
+  selectedLabel?: string | null;
   onToggleParameter: (parameter: string) => void;
   onClearParameters: () => void;
   onCenterOnUserLocation: () => void;
@@ -53,6 +54,7 @@ export function MapCard({
   isLocating,
   userLocation,
   isLoadingStations,
+  selectedLabel,
   onToggleParameter,
   onClearParameters,
   onCenterOnUserLocation,
@@ -76,7 +78,7 @@ export function MapCard({
       </CardHeader>
       <CardContent className="flex flex-col">
         <div className="mb-3 flex flex-wrap gap-2">
-          <LocationSearch onSelectPlace={onSelectPlace} isLoadingStations={isLoadingStations} />
+          <LocationSearch onSelectPlace={onSelectPlace} isLoadingStations={isLoadingStations} selectedLabel={selectedLabel} />
           <FilterPopover
             groupedParameters={groupedParameters}
             selectedParameters={selectedParameters}

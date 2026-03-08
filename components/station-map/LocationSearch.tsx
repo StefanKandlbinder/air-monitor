@@ -31,11 +31,13 @@ export type PlaceSelection = {
 type LocationSearchProps = {
   onSelectPlace: (place: PlaceSelection) => void;
   isLoadingStations?: boolean;
+  selectedLabel?: string | null;
 };
 
 export function LocationSearch({
   onSelectPlace,
   isLoadingStations = false,
+  selectedLabel = null,
 }: LocationSearchProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -57,14 +59,11 @@ export function LocationSearch({
 
   const handleSelect = useCallback(
     (result: NominatimResult) => {
+      const label = result.display_name.split(",").slice(0, 2).join(", ");
       setOpen(false);
       setQuery("");
       setDebouncedQuery("");
-      onSelectPlace({
-        lat: Number(result.lat),
-        lon: Number(result.lon),
-        label: result.display_name.split(",").slice(0, 2).join(", "),
-      });
+      onSelectPlace({ lat: Number(result.lat), lon: Number(result.lon), label });
     },
     [onSelectPlace],
   );
@@ -114,7 +113,7 @@ export function LocationSearch({
                 // Item already highlighted — let Tab close the popover and move focus naturally
               }
             }}
-            placeholder="Search any location…"
+            placeholder={selectedLabel ?? "Search any location…"}
           />
           <InputGroupAddon align="inline-end">
             <InputGroupButton

@@ -30,6 +30,10 @@ export default function StationMap() {
   const [isLocating, setIsLocating] = useState(false);
   const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
   const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
+  const [searchLabel, setSearchLabel] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("label");
+  });
   const [isLoadingStations, setIsLoadingStations] = useState(false);
 
   const locationsQuery = useLocationsQuery();
@@ -100,12 +104,12 @@ export default function StationMap() {
     if (searchLocations) return; // don't override a search fly
     if (!filteredLocations.length || hasFlownToDataRef.current) return;
     hasFlownToDataRef.current = true;
-    const longitude =
-      filteredLocations.reduce((acc, l) => acc + l.coordinates.longitude, 0) /
-      filteredLocations.length;
-    const latitude =
-      filteredLocations.reduce((acc, l) => acc + l.coordinates.latitude, 0) /
-      filteredLocations.length;
+    const { sumLng, sumLat } = filteredLocations.reduce(
+      (acc, l) => ({ sumLng: acc.sumLng + l.coordinates.longitude, sumLat: acc.sumLat + l.coordinates.latitude }),
+      { sumLng: 0, sumLat: 0 }
+    );
+    const longitude = sumLng / filteredLocations.length;
+    const latitude = sumLat / filteredLocations.length;
     mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 9.5, duration: 800 });
   }, [filteredLocations, searchLocations]);
 
@@ -124,21 +128,30 @@ export default function StationMap() {
     };
   });
 
-  const fetchStationsAt = useCallback((lat: string, lng: string) => {
+  const loadStationsAt = useCallback(async (lat: number | string, lng: number | string): Promise<OpenAQLocation[] | null> => {
     setIsLoadingStations(true);
-    fetch(`/api/search?lat=${lat}&lon=${lng}`)
-      .then((res) => {
-        if (!res.ok) return res.json().then((b: { error?: string }) => Promise.reject(new Error(b.error ?? `Server error ${res.status}`)));
-        return res.json() as Promise<{ locations: OpenAQLocation[] }>;
-      })
-      .then((data) => setSearchLocations(data.locations))
-      .catch((err) => {
-        toast.error("Could not load stations for this location.", {
-          description: err instanceof Error ? err.message : undefined,
-        });
-      })
-      .finally(() => setIsLoadingStations(false));
+    try {
+      const res = await fetch(`/api/search?lat=${lat}&lon=${lng}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Server error ${res.status}`);
+      }
+      const data = (await res.json()) as { locations: OpenAQLocation[] };
+      setSearchLocations(data.locations);
+      return data.locations;
+    } catch (err) {
+      toast.error("Could not load stations for this location.", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+      return null;
+    } finally {
+      setIsLoadingStations(false);
+    }
   }, []);
+
+  const fetchStationsAt = useCallback((lat: string, lng: string) => {
+    void loadStationsAt(lat, lng);
+  }, [loadStationsAt]);
 
   // On mount: if URL has lat/lng params, fetch stations at those coordinates
   useEffect(() => {
@@ -150,21 +163,24 @@ export default function StationMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buildLocationParams = (center: { longitude: number; latitude: number; zoom: number }) =>
-    new URLSearchParams({
+  const buildLocationParams = (center: { longitude: number; latitude: number; zoom: number }, label?: string) => {
+    const params: Record<string, string> = {
       lat: center.latitude.toFixed(4),
       lng: center.longitude.toFixed(4),
       zoom: center.zoom.toFixed(1),
-    }).toString();
+    };
+    if (label) params.label = label;
+    return new URLSearchParams(params).toString();
+  };
 
-  // Continuous pan/zoom — replace in place, no history entry
+  // Continuous pan/zoom — replace in place, no history entry (preserve current label)
   const handleMoveEnd = (center: { longitude: number; latitude: number; zoom: number }): void => {
-    window.history.replaceState(null, "", `?${buildLocationParams(center)}`);
+    window.history.replaceState(null, "", `?${buildLocationParams(center, searchLabel ?? undefined)}`);
   };
 
   // Intentional "go to" — push so back button restores previous position
-  const pushLocation = (center: { longitude: number; latitude: number; zoom: number }): void => {
-    window.history.pushState(null, "", `?${buildLocationParams(center)}`);
+  const pushLocation = (center: { longitude: number; latitude: number; zoom: number }, label?: string): void => {
+    window.history.pushState(null, "", `?${buildLocationParams(center, label)}`);
   };
 
   // Respond to browser back/forward — fly the map and re-fetch stations
@@ -174,6 +190,8 @@ export default function StationMap() {
       const lat = sp.get("lat");
       const lng = sp.get("lng");
       const zoom = sp.get("zoom");
+      const label = sp.get("label");
+      setSearchLabel(label);
       if (lat && lng) {
         if (zoom) {
           mapRef.current?.flyTo({
@@ -213,6 +231,7 @@ export default function StationMap() {
           longitude: position.coords.longitude,
         };
         setUserLocation(nextLocation);
+        setSearchLabel(null);
         pushLocation({ ...nextLocation, zoom: 12 });
         mapRef.current?.flyTo({
           center: [nextLocation.longitude, nextLocation.latitude],
@@ -238,37 +257,19 @@ export default function StationMap() {
   };
 
   const handlePlaceSelect = async (place: PlaceSelection): Promise<void> => {
-    mapRef.current?.flyTo({
-      center: [place.lon, place.lat],
-      zoom: 10,
-      duration: 1000,
-    });
-    pushLocation({ longitude: place.lon, latitude: place.lat, zoom: 10 });
-
-    setIsLoadingStations(true);
-    try {
-      const res = await fetch(`/api/search?lat=${place.lat}&lon=${place.lon}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Server error ${res.status}`);
-      }
-      const data = (await res.json()) as { locations: OpenAQLocation[] };
-      setSearchLocations(data.locations);
+    setSearchLabel(place.label);
+    mapRef.current?.flyTo({ center: [place.lon, place.lat], zoom: 10, duration: 1000 });
+    pushLocation({ longitude: place.lon, latitude: place.lat, zoom: 10 }, place.label);
+    const result = await loadStationsAt(place.lat, place.lon);
+    if (result !== null) {
       setSelectedParameters([]);
-      if (data.locations.length === 0) {
-        toast.info("No stations found within 25 km of this location.");
-      }
-    } catch (err) {
-      toast.error("Could not load stations for this location.", {
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setIsLoadingStations(false);
+      if (result.length === 0) toast.info("No stations found within 25 km of this location.");
     }
   };
 
   const handleClearSearch = (): void => {
     setSearchLocations(null);
+    setSearchLabel(null);
     hasFlownToDataRef.current = false; // allow re-fly to default centroid
   };
 
@@ -283,6 +284,7 @@ export default function StationMap() {
       isLocating={isLocating}
       userLocation={userLocation}
       isLoadingStations={isLoadingStations}
+      selectedLabel={searchLabel}
       onToggleParameter={toggleParameterFilter}
       onClearParameters={() => setSelectedParameters([])}
       onCenterOnUserLocation={centerOnUserLocation}
