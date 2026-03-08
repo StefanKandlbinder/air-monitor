@@ -30,7 +30,7 @@ export default async function StationPeriodPage({
     <>
       <StationBreadcrumb locationId={Number(id)} />
 
-      <StationDetails />
+      <StationDetails key={id} />
     </>
   );
 }

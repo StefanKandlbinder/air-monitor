@@ -31,15 +31,15 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get("locationId");
     const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
     const rollup = (searchParams.get("rollup") ?? "hours") as Rollup;
 
-    if (!locationId || !dateFrom || !dateTo) {
+    if (!locationId || !dateFrom) {
       return NextResponse.json(
-        { error: "Missing locationId, dateFrom, or dateTo" },
+        { error: "Missing locationId or dateFrom" },
         { status: 400 }
       );
     }
+    const dateTo = searchParams.get("dateTo") ?? new Date().toISOString();
 
     if (rollup !== "hours" && rollup !== "days") {
       return NextResponse.json(
@@ -63,11 +63,12 @@ export async function GET(request: Request) {
       AQI_PARAMS.has(sensor.parameter.name.toLowerCase())
     );
 
-    // Hourly uses datetime_from/datetime_to; daily uses date_from/date_to
+    // Hourly uses datetime_from; daily uses date_from.
+    // No upper-bound is passed so OpenAQ always returns data up to the current time.
     const query: Record<string, string> =
       rollup === "hours"
-        ? { datetime_from: dateFrom, datetime_to: dateTo, limit: "1000" }
-        : { date_from: dateFrom.slice(0, 10), date_to: dateTo.slice(0, 10), limit: "1000" };
+        ? { datetime_from: dateFrom, limit: "1000" }
+        : { date_from: dateFrom.slice(0, 10), limit: "1000" };
 
     const endpoint = rollup === "hours" ? "hours" : "days";
 
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
         const data = await openaqGet<SensorDataResponse>(
           `/v3/sensors/${sensor.id}/${endpoint}`,
           query,
-          { revalidate: 3600 }
+          { revalidate: 300 }
         );
 
         const parameter = normalizeParam(sensor.parameter.name.toLowerCase());

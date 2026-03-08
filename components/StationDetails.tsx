@@ -75,8 +75,8 @@ export default function StationDetails() {
 
   const aqiQuery = useQuery({
     queryKey: ["aqi-single", locationId, aqiSensorIds],
-    enabled: (cachedAqi === null || cachedAqi.aqiValue === null) && aqiSensors.length > 0,
-    staleTime: 1000 * 60 * 60,
+    enabled: aqiSensors.length > 0,
+    staleTime: 1000 * 60 * 5,
     queryFn: async () => {
       const res = await fetch("/api/aqi", {
         method: "POST",
@@ -91,11 +91,11 @@ export default function StationDetails() {
 
   const measurementsQuery = useMeasurementsQuery(locationId, rollup, activeDateRange);
 
-  // Skip cached AQI entries with no value (stale pre-fix cache)
+  // Prefer fresh aqiQuery result; fall back to map cache only while aqiQuery is loading
   const validCachedAqi = cachedAqi?.aqiValue != null ? cachedAqi : null;
-  const aqiData = validCachedAqi ?? aqiQuery.data ?? null;
+  const aqiData = aqiQuery.data ?? validCachedAqi ?? null;
 
-  // Build current-values snapshot from aqiData.latestValues — same source as the map
+  // Build current-values snapshot from aqiData.latestValues
   const snapshot = useMemo<StationSnapshotResponse | null>(() => {
     if (!location || !aqiData?.latestValues) return null;
     const readings: AirQualityReading[] = Object.entries(aqiData.latestValues)

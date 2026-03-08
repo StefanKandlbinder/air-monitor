@@ -20,6 +20,7 @@ function useLoadingMessage(): string | null {
   const fetchingLocations = useIsFetching({ queryKey: ["locations"] });
   const fetchingLocation = useIsFetching({ queryKey: ["location"] });
   const fetchingAqi = useIsFetching({ queryKey: ["aqi"] });
+  const fetchingAqiSingle = useIsFetching({ queryKey: ["aqi-single"] });
   const fetchingMeasurements = useIsFetching({ queryKey: ["measurements"] });
 
   if (fetchingLocations) return "Loading stations…";
@@ -33,6 +34,16 @@ function useLoadingMessage(): string | null {
       if (name) return `Loading measurements for ${name}…`;
     }
     return "Loading measurements…";
+  }
+  if (fetchingAqiSingle) {
+    const active = queryClient.getQueryCache().findAll({ queryKey: ["aqi-single"], fetchStatus: "fetching" });
+    const locationId = active[0]?.queryKey[1] as number | undefined;
+    if (locationId) {
+      const locations = queryClient.getQueryData<OpenAQLocation[]>(["locations"]);
+      const name = locations?.find((l) => l.id === locationId)?.name;
+      if (name) return `Loading air quality index for ${name}…`;
+    }
+    return "Loading air quality index…";
   }
   if (fetchingAqi) return "Loading air quality index…";
   return null;

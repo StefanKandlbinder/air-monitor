@@ -27,10 +27,9 @@ export function useMeasurementsQuery(
       locationId,
       rollup,
       dateRange?.dateFrom ?? null,
-      dateRange?.dateTo ?? null,
     ],
     enabled: !!locationId && !!dateRange,
-    staleTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 5,
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("429")) {
         return failureCount < 4;
@@ -47,7 +46,6 @@ export function useMeasurementsQuery(
         locationId: String(locationId),
         rollup,
         dateFrom: dateRange.dateFrom,
-        dateTo: dateRange.dateTo,
       });
 
       const response = await fetch(

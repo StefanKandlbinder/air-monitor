@@ -13,9 +13,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FilterPopover } from "@/components/station-map/FilterPopover";
-import { LocationSearch, type PlaceSelection } from "@/components/station-map/LocationSearch";
+import {
+  LocationSearch,
+  type PlaceSelection,
+} from "@/components/station-map/LocationSearch";
 import { StationMapCore } from "@/components/station-map/StationMapCore";
-import type { GroupedParameters, UserLocation } from "@/components/station-map/types";
+import type {
+  GroupedParameters,
+  UserLocation,
+} from "@/components/station-map/types";
 import type { OpenAQLocation } from "@/lib/types";
 
 type MapCardProps = {
@@ -25,7 +31,10 @@ type MapCardProps = {
   filteredLocations: OpenAQLocation[];
   locationColors?: Record<number, string>;
   locationAqiValues?: Record<number, number>;
-  locationLatestValues?: Record<number, Record<string, { value: number; units: string }>>;
+  locationLatestValues?: Record<
+    number,
+    Record<string, { value: number; units: string }>
+  >;
   selectedParameters: string[];
   groupedParameters: GroupedParameters;
   isLocating: boolean;
@@ -38,7 +47,11 @@ type MapCardProps = {
   onSelectLocation: (location: OpenAQLocation) => void;
   onSelectPlace: (place: PlaceSelection) => void;
   onClearSearch: () => void;
-  onMoveEnd?: (center: { longitude: number; latitude: number; zoom: number }) => void;
+  onMoveEnd?: (center: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+  }) => void;
 };
 
 export function MapCard({
@@ -68,7 +81,7 @@ export function MapCard({
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-2xl">Linz Air Monitor</CardTitle>
+            <CardTitle className="text-2xl">Air Monitor</CardTitle>
             <CardDescription>
               Live station map powered by OpenAQ.
             </CardDescription>
@@ -78,7 +91,11 @@ export function MapCard({
       </CardHeader>
       <CardContent className="flex flex-col">
         <div className="mb-3 flex flex-wrap gap-2">
-          <LocationSearch onSelectPlace={onSelectPlace} isLoadingStations={isLoadingStations} selectedLabel={selectedLabel} />
+          <LocationSearch
+            onSelectPlace={onSelectPlace}
+            isLoadingStations={isLoadingStations}
+            selectedLabel={selectedLabel}
+          />
           <FilterPopover
             groupedParameters={groupedParameters}
             selectedParameters={selectedParameters}

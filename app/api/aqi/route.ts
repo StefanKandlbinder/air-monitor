@@ -30,11 +30,11 @@ type SensorHoursResponse = { results: SensorHoursResult[] };
 async function fetchLatest(sensorId: number): Promise<{ value: number; timestamp: string } | null> {
   const hourStart = floorToHour(new Date());
   const to = new Date(hourStart.getTime() + 3_600_000); // end of current hour
-  const from = new Date(hourStart.getTime() - 3 * 60 * 60 * 1000);
+  const from = new Date(hourStart.getTime() - 24 * 60 * 60 * 1000);
   try {
     const data = await openaqGet<SensorHoursResponse>(
       `/v3/sensors/${sensorId}/hours`,
-      { datetime_from: toHourIso(from), datetime_to: toHourIso(to), limit: "10" },
+      { datetime_from: toHourIso(from), datetime_to: toHourIso(to), limit: "100" },
       { revalidate: 3600 }
     );
     if (!data.results.length) return null;
