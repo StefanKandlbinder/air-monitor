@@ -8,8 +8,10 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { groupParameters, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
 import { MapCard } from "@/components/station-map/MapCard";
+import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
 import type { PlaceSelection } from "@/components/station-map/LocationSearch";
 import type { UserLocation } from "@/components/station-map/types";
+import { getAqiSensors } from "@/lib/aqi";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -30,16 +32,7 @@ export default function StationMap() {
   const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
   const [isLoadingStations, setIsLoadingStations] = useState(false);
 
-  const locationsQuery = useQuery({
-    queryKey: ["locations"],
-    queryFn: async () => {
-      const response = await fetch("/api/stations");
-      if (!response.ok) throw new Error("Could not load stations");
-      const data = (await response.json()) as { locations: OpenAQLocation[] };
-      return data.locations;
-    },
-    staleTime: 1000 * 60 * 60 * 24 * 7,
-  });
+  const locationsQuery = useLocationsQuery();
 
   const locations = useMemo(
     () => searchLocations ?? locationsQuery.data ?? [],
@@ -61,22 +54,13 @@ export default function StationMap() {
     [availableParameters]
   );
 
-  const AQI_PARAMS = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);
-
   const aqiLocations = useMemo(() => {
     return locations
       .map((location) => ({
         locationId: location.id,
-        sensors: location.sensors
-          .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
-          .map((s) => ({
-            sensorId: s.id,
-            param: s.parameter.name.toLowerCase() === "pm2.5" ? "pm25" : s.parameter.name.toLowerCase(),
-            units: s.parameter.units,
-          })),
+        sensors: getAqiSensors(location.sensors),
       }))
       .filter((l) => l.sensors.length > 0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locations]);
 
   const aqiQuery = useQuery({

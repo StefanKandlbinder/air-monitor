@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
+import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
-import type { AirQualityReading, OpenAQLocation, Rollup } from "@/lib/types";
+import { getAqiSensors } from "@/lib/aqi";
+import type { AirQualityReading, Rollup } from "@/lib/types";
 
 const PARAMETER_LIMITS: Record<string, number> = { no2: 30, pm10: 50, pm25: 25 };
 const PARAMETER_DISPLAY_NAMES: Record<string, string> = { no2: "NO2", pm10: "PM10", pm25: "PM2.5" };
@@ -43,33 +45,17 @@ export default function StationDetails() {
   const activeDateRange =
     dateFrom && dateTo ? { dateFrom, dateTo } : weeklyRange;
 
-  const locationsQuery = useQuery({
-    queryKey: ["locations"],
-    queryFn: async () => {
-      const response = await fetch("/api/stations");
-      if (!response.ok) throw new Error("Could not load stations");
-      const data = (await response.json()) as { locations: OpenAQLocation[] };
-      return data.locations;
-    },
-    staleTime: 1000 * 60 * 60 * 24 * 7,
-  });
+  const locationsQuery = useLocationsQuery();
 
   const locationFromCache = useMemo(
     () => locationsQuery.data?.find((l) => l.id === locationId) ?? null,
     [locationsQuery.data, locationId]
   );
 
-  const singleLocationQuery = useQuery({
-    queryKey: ["location", locationId],
-    enabled: !locationsQuery.isPending && locationFromCache === null,
-    queryFn: async () => {
-      const res = await fetch(`/api/stations/${locationId}`);
-      if (!res.ok) throw new Error("Could not load station");
-      const data = (await res.json()) as { location: OpenAQLocation | null };
-      return data.location;
-    },
-    staleTime: 1000 * 60 * 60 * 24 * 7,
-  });
+  const singleLocationQuery = useSingleLocationQuery(
+    locationId,
+    locationsQuery.isPending || locationFromCache !== null
+  );
 
   const location = locationFromCache ?? singleLocationQuery.data ?? null;
 
@@ -86,20 +72,15 @@ export default function StationDetails() {
     return null;
   }, [queryClient, locationId]);
 
-  const aqiSensors = useMemo(() => {
-    if (!location) return [];
-    const AQI = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);
-    return location.sensors
-      .filter((s) => AQI.has(s.parameter.name.toLowerCase()))
-      .map((s) => ({
-        sensorId: s.id,
-        param: s.parameter.name.toLowerCase() === "pm2.5" ? "pm25" : s.parameter.name.toLowerCase(),
-        units: s.parameter.units,
-      }));
-  }, [location]);
+  const aqiSensors = useMemo(
+    () => (location ? getAqiSensors(location.sensors) : []),
+    [location]
+  );
+
+  const aqiSensorIds = useMemo(() => aqiSensors.map((s) => s.sensorId), [aqiSensors]);
 
   const aqiQuery = useQuery({
-    queryKey: ["aqi-single", locationId, aqiSensors],
+    queryKey: ["aqi-single", locationId, aqiSensorIds],
     enabled: (cachedAqi === null || cachedAqi.aqiValue === null) && aqiSensors.length > 0,
     staleTime: 1000 * 60 * 60,
     queryFn: async () => {

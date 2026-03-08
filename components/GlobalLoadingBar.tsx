@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useIsFetching } from "@tanstack/react-query";
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { OpenAQLocation } from "@/lib/types";
 
 const TOAST_ID = "openaq-loading";
 
@@ -15,6 +16,7 @@ const OpenAQLogo = (
 );
 
 function useLoadingMessage(): string | null {
+  const queryClient = useQueryClient();
   const fetchingLocations = useIsFetching({ queryKey: ["locations"] });
   const fetchingLocation = useIsFetching({ queryKey: ["location"] });
   const fetchingAqi = useIsFetching({ queryKey: ["aqi"] });
@@ -22,7 +24,16 @@ function useLoadingMessage(): string | null {
 
   if (fetchingLocations) return "Loading stations…";
   if (fetchingLocation) return "Loading station…";
-  if (fetchingMeasurements) return "Loading measurements…";
+  if (fetchingMeasurements) {
+    const active = queryClient.getQueryCache().findAll({ queryKey: ["measurements"], fetchStatus: "fetching" });
+    const locationId = active[0]?.queryKey[1] as number | undefined;
+    if (locationId) {
+      const locations = queryClient.getQueryData<OpenAQLocation[]>(["locations"]);
+      const name = locations?.find((l) => l.id === locationId)?.name;
+      if (name) return `Loading measurements for ${name}…`;
+    }
+    return "Loading measurements…";
+  }
   if (fetchingAqi) return "Loading air quality index…";
   return null;
 }

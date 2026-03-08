@@ -20,14 +20,7 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/ui/popover";
-
-type NominatimResult = {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  type: string;
-};
+import { usePlaceSearchQuery, type NominatimResult } from "@/components/station-map/queries/use-place-search-query";
 
 export type PlaceSelection = {
   lat: number;
@@ -45,50 +38,28 @@ export function LocationSearch({
   isLoadingStations = false,
 }: LocationSearchProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commandRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (query.trim().length < 2) {
-      setResults([]);
-      setOpen(false);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const url = new URL("https://nominatim.openstreetmap.org/search");
-        url.searchParams.set("q", query);
-        url.searchParams.set("format", "json");
-        url.searchParams.set("limit", "6");
-        const res = await fetch(url.toString(), {
-          headers: { "Accept-Language": "en" },
-        });
-        const data = (await res.json()) as NominatimResult[];
-        setResults(data);
-        setOpen(true);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 350);
-
+    if (query.trim().length < 2) return;
+    debounceRef.current = setTimeout(() => setDebouncedQuery(query), 350);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query]);
 
+  const isQueryActive = query.trim().length >= 2;
+  const { data: results = [], isFetching } = usePlaceSearchQuery(debouncedQuery);
+
   const handleSelect = useCallback(
     (result: NominatimResult) => {
       setOpen(false);
       setQuery("");
-      setResults([]);
+      setDebouncedQuery("");
       onSelectPlace({
         lat: Number(result.lat),
         lon: Number(result.lon),
@@ -98,39 +69,21 @@ export function LocationSearch({
     [onSelectPlace],
   );
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (query.trim().length < 2) return;
-    if (results.length > 0) {
-      handleSelect(results[0]);
-      return;
-    }
-    // Fetch immediately if debounce hasn't resolved yet
+    // Flush debounce immediately so the query fires now
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    setLoading(true);
-    try {
-      const url = new URL("https://nominatim.openstreetmap.org/search");
-      url.searchParams.set("q", query);
-      url.searchParams.set("format", "json");
-      url.searchParams.set("limit", "1");
-      const res = await fetch(url.toString(), {
-        headers: { "Accept-Language": "en" },
-      });
-      const data = (await res.json()) as NominatimResult[];
-      if (data[0]) handleSelect(data[0]);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
+    setDebouncedQuery(query);
+    if (results.length > 0) handleSelect(results[0]);
   };
 
   return (
     <Popover
-      open={open && (loading || results.length > 0 || query.trim().length > 1)}
+      open={open && isQueryActive && (isFetching || results.length > 0)}
       onOpenChange={setOpen}
     >
       <PopoverAnchor asChild>
-        <InputGroup className="w-64">
+        <InputGroup className="h-8 w-64">
           <InputGroupAddon align="inline-start">
             <Search />
           </InputGroupAddon>
@@ -139,10 +92,27 @@ export function LocationSearch({
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              if (e.target.value.trim().length > 1) setOpen(true);
+              if (e.target.value.trim().length >= 2) setOpen(true);
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter") void handleSubmit();
+              if (e.key === "Enter") { handleSubmit(); return; }
+              if (!open || !isQueryActive || results.length === 0) return;
+              if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                e.preventDefault();
+                commandRef.current?.dispatchEvent(
+                  new KeyboardEvent("keydown", { key: e.key, bubbles: true, cancelable: true })
+                );
+              } else if (e.key === "Tab") {
+                const highlighted = commandRef.current?.querySelector('[aria-selected="true"]');
+                if (!highlighted) {
+                  // Nothing highlighted yet — move into the list
+                  e.preventDefault();
+                  commandRef.current?.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true })
+                  );
+                }
+                // Item already highlighted — let Tab close the popover and move focus naturally
+              }
             }}
             placeholder="Search any location…"
           />
@@ -150,10 +120,10 @@ export function LocationSearch({
             <InputGroupButton
               size="sm"
               variant="ghost"
-              disabled={query.trim().length < 2 || loading || isLoadingStations}
-              onClick={() => void handleSubmit()}
+              disabled={query.trim().length < 2 || isFetching || isLoadingStations}
+              onClick={handleSubmit}
             >
-              {isLoadingStations ? "Loading…" : loading ? "…" : "Search"}
+              {isLoadingStations ? "Loading…" : isFetching ? "…" : "Search"}
             </InputGroupButton>
           </InputGroupAddon>
         </InputGroup>
@@ -163,9 +133,9 @@ export function LocationSearch({
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Command shouldFilter={false}>
+        <Command ref={commandRef} shouldFilter={false}>
           <CommandList>
-            {loading ? (
+            {isFetching ? (
               <CommandEmpty>Searching…</CommandEmpty>
             ) : results.length === 0 ? (
               <CommandEmpty>No places found.</CommandEmpty>

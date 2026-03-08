@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Clock, Cloud, Info, MapPin } from "lucide-react";
 import dayjs from "dayjs";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DateRangePicker } from "@/components/station-map/DateRangePicker";
 import { StationMapPreview } from "@/components/station-map/StationMapPreview";
 import { TrendChart } from "@/components/station-map/TrendChart";
@@ -23,7 +28,6 @@ const PARAM_LABELS: Record<string, string> = {
   so2: "SO2",
   no2: "NO2",
 };
-
 
 type DetailsPanelProps = {
   isLoading: boolean;
@@ -62,11 +66,14 @@ export function DetailsPanel({
   measurements,
   measurementsLoading,
 }: DetailsPanelProps) {
-  const latestSnapshotDate = snapshot?.readings?.length
-    ? snapshot.readings.reduce((latest, reading) => {
-        return reading.timestamp > latest ? reading.timestamp : latest;
-      }, snapshot.readings[0].timestamp)
-    : null;
+  const latestSnapshotDate = useMemo(() => {
+    if (!snapshot?.readings?.length) return null;
+    return snapshot.readings.reduce(
+      (latest, reading) =>
+        reading.timestamp > latest ? reading.timestamp : latest,
+      snapshot.readings[0].timestamp,
+    );
+  }, [snapshot]);
   const snapshotDate = latestSnapshotDate
     ? dayjs(latestSnapshotDate).format("DD.MM.YYYY HH:mm")
     : null;
@@ -79,8 +86,23 @@ export function DetailsPanel({
           {isLoading ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Skeleton className="h-7 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+                {activeSelectedLocation ? (
+                  <>
+                    <h2 className="text-xl font-semibold tracking-tight">
+                      {activeSelectedLocation.name}
+                    </h2>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      {activeSelectedLocation.locality ??
+                        activeSelectedLocation.country.name}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Skeleton className="h-7 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <Skeleton className="h-20 w-full" />
@@ -98,7 +120,8 @@ export function DetailsPanel({
                   </h2>
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    {activeSelectedLocation.locality ?? activeSelectedLocation.country.name}
+                    {activeSelectedLocation.locality ??
+                      activeSelectedLocation.country.name}
                   </p>
                   {snapshotDate ? (
                     <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -117,30 +140,48 @@ export function DetailsPanel({
                       </span>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-4 w-4 text-muted-foreground"
+                          >
                             <Info className="h-3.5 w-3.5" />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-3" align="start">
-                          <p className="text-xs font-semibold mb-2">AQI Breakdown</p>
-                          {aqiSubIndices && Object.keys(aqiSubIndices).length > 0 ? (
+                          <p className="text-xs font-semibold mb-2">
+                            AQI Breakdown
+                          </p>
+                          {aqiSubIndices &&
+                          Object.keys(aqiSubIndices).length > 0 ? (
                             <div className="space-y-1.5">
                               {Object.entries(aqiSubIndices)
                                 .sort(([, a], [, b]) => b - a)
                                 .map(([param, subIndex]) => {
                                   const isDominant = subIndex === aqiValue;
                                   return (
-                                    <div key={param} className="flex items-center justify-between gap-2">
+                                    <div
+                                      key={param}
+                                      className="flex items-center justify-between gap-2"
+                                    >
                                       <div className="flex items-center gap-1.5">
                                         <div
                                           className="h-2 w-2 rounded-full shrink-0"
-                                          style={{ backgroundColor: aqiToColor(subIndex) }}
+                                          style={{
+                                            backgroundColor:
+                                              aqiToColor(subIndex),
+                                          }}
                                         />
-                                        <span className={`text-xs ${isDominant ? "font-semibold" : "text-muted-foreground"}`}>
-                                          {PARAM_LABELS[param] ?? param.toUpperCase()}
+                                        <span
+                                          className={`text-xs ${isDominant ? "font-semibold" : "text-muted-foreground"}`}
+                                        >
+                                          {PARAM_LABELS[param] ??
+                                            param.toUpperCase()}
                                         </span>
                                       </div>
-                                      <span className={`text-xs font-mono ${isDominant ? "font-semibold" : "text-muted-foreground"}`}>
+                                      <span
+                                        className={`text-xs font-mono ${isDominant ? "font-semibold" : "text-muted-foreground"}`}
+                                      >
                                         {subIndex}
                                       </span>
                                     </div>
@@ -148,10 +189,13 @@ export function DetailsPanel({
                                 })}
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground">No breakdown available.</p>
+                            <p className="text-xs text-muted-foreground">
+                              No breakdown available.
+                            </p>
                           )}
                           <p className="text-[10px] text-muted-foreground mt-2.5 border-t pt-2">
-                            AQI is the highest sub-index across all pollutants (US EPA formula).
+                            AQI is the highest sub-index across all pollutants
+                            (US EPA formula).
                           </p>
                         </PopoverContent>
                       </Popover>
@@ -170,19 +214,26 @@ export function DetailsPanel({
                     }
                   />
                 </div>
-
               </div>
 
               {/* Right: measurement cards */}
               <div className="flex flex-col gap-3">
                 {snapshot.readings.map((reading) => {
                   const subIndex = aqiSubIndices?.[reading.parameter];
-                  const cardColor = subIndex != null ? aqiToColor(subIndex) : null;
+                  const cardColor =
+                    subIndex != null ? aqiToColor(subIndex) : null;
                   return (
                     <Card
                       key={reading.parameter}
                       className="bg-background/50"
-                      style={cardColor ? { borderColor: `${cardColor}40`, backgroundColor: `${cardColor}26` } : undefined}
+                      style={
+                        cardColor
+                          ? {
+                              borderColor: `${cardColor}40`,
+                              backgroundColor: `${cardColor}26`,
+                            }
+                          : undefined
+                      }
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
@@ -222,7 +273,7 @@ export function DetailsPanel({
       {/* Trend chart card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur">
         <CardContent className="p-6 space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-between flex-wrap items-center">
             <DateRangePicker
               dateFrom={dateFrom}
               dateTo={dateTo}

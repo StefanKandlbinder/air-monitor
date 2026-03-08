@@ -1,7 +1,7 @@
 import { aqiToColor, AQI_COLORS } from "@/lib/aqi-colors";
 import type { OpenAQLocation } from "@/lib/types";
 
-const AQI_PARAMS = new Set(["pm25", "pm10", "o3", "co", "so2", "no2"]);
+export const AQI_PARAMS = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);
 
 // EPA AQI breakpoints: [C_low, C_high, I_low, I_high]
 const BP_PM25  = [[0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],[55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,350.4,301,400],[350.5,500.4,401,500]];
@@ -50,6 +50,18 @@ export function calcSubIndex(value: number, param: string, units: string): numbe
     case "no2":  return interpolate(c, BP_NO2);
     default:     return null;
   }
+}
+
+export function getAqiSensors(
+  sensors: OpenAQLocation["sensors"]
+): { sensorId: number; param: string; units: string }[] {
+  return sensors
+    .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
+    .map((s) => ({
+      sensorId: s.id,
+      param: s.parameter.name.toLowerCase() === "pm2.5" ? "pm25" : s.parameter.name.toLowerCase(),
+      units: s.parameter.units,
+    }));
 }
 
 export type LocationAqi = {
