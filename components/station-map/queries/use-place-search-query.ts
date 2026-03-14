@@ -1,23 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-
-export type NominatimResult = {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  type: string;
-};
+import type { NominatimResult } from "@/app/api/places/route";
 
 async function searchPlaces(query: string, limit = 6): Promise<NominatimResult[]> {
-  const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("q", query);
-  url.searchParams.set("format", "json");
-  url.searchParams.set("limit", String(limit));
-  const res = await fetch(url.toString(), { headers: { "Accept-Language": "en" } });
-  return (await res.json()) as NominatimResult[];
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  const res = await fetch(`/api/places?${params.toString()}`);
+  if (!res.ok) throw new Error("Could not search places");
+  const data = (await res.json()) as { results: NominatimResult[] };
+  return data.results;
 }
+
+export type { NominatimResult };
 
 export function usePlaceSearchQuery(query: string) {
   return useQuery({

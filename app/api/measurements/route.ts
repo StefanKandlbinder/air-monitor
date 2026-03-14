@@ -39,7 +39,16 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
+
+    if (isNaN(new Date(dateFrom).getTime())) {
+      return NextResponse.json({ error: "Invalid dateFrom" }, { status: 400 });
+    }
+
     const dateTo = searchParams.get("dateTo") ?? new Date().toISOString();
+
+    if (isNaN(new Date(dateTo).getTime())) {
+      return NextResponse.json({ error: "Invalid dateTo" }, { status: 400 });
+    }
 
     if (rollup !== "hours" && rollup !== "days") {
       return NextResponse.json(
@@ -120,7 +129,6 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[/api/measurements]", message);
     const status = message.includes("429") ? 429 : 500;
     const description =
       status === 429

@@ -98,6 +98,7 @@ export default function StationMap() {
   const mapStyle = resolvedTheme === "dark" ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
 
   const hasFlownToDataRef = useRef(false);
+  const popstateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On initial load, fly to the centroid of all default stations once.
   useEffect(() => {
@@ -200,11 +201,15 @@ export default function StationMap() {
             duration: 600,
           });
         }
-        fetchStationsAt(lat, lng);
+        if (popstateDebounceRef.current) clearTimeout(popstateDebounceRef.current);
+        popstateDebounceRef.current = setTimeout(() => fetchStationsAt(lat, lng), 150);
       }
     };
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      if (popstateDebounceRef.current) clearTimeout(popstateDebounceRef.current);
+    };
   }, [fetchStationsAt]);
 
   const toggleParameterFilter = (parameter: string): void => {

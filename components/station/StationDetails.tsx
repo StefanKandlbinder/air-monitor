@@ -56,14 +56,13 @@ export default function StationDetails() {
   const queryClient = useQueryClient();
 
   type AqiCacheEntry = { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
-  let cachedAqi: { color: string; aqiValue: number | null; latestValues: Record<string, { value: number; units: string }>; subIndices: Record<string, number> } | null = null;
-  for (const q of queryClient.getQueryCache().findAll({ queryKey: ["aqi"] })) {
-    const d = q.state.data as AqiCacheEntry | undefined;
-    if (d?.colors?.[locationId] !== undefined) {
-      cachedAqi = { color: d.colors[locationId], aqiValue: d.aqiValues?.[locationId] ?? null, latestValues: d.latestValues?.[locationId] ?? {}, subIndices: d.subIndices?.[locationId] ?? {} };
-      break;
-    }
-  }
+  const matchingAqiCache = queryClient
+    .getQueriesData<AqiCacheEntry>({ queryKey: ["aqi"] })
+    .find(([, d]) => d?.colors?.[locationId] !== undefined);
+  const cachedAqiData = matchingAqiCache?.[1];
+  const cachedAqi = cachedAqiData?.colors?.[locationId] !== undefined
+    ? { color: cachedAqiData.colors[locationId], aqiValue: cachedAqiData.aqiValues?.[locationId] ?? null, latestValues: cachedAqiData.latestValues?.[locationId] ?? {}, subIndices: cachedAqiData.subIndices?.[locationId] ?? {} }
+    : null;
 
   const aqiSensors = useMemo(
     () => (location ? getAqiSensors(location.sensors) : []),
@@ -75,7 +74,7 @@ export default function StationDetails() {
   const aqiQuery = useQuery({
     queryKey: ["aqi-single", locationId, aqiSensorIds],
     enabled: aqiSensors.length > 0,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 60,
     queryFn: async () => {
       const res = await fetch("/api/aqi", {
         method: "POST",
