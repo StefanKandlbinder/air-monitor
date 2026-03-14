@@ -12,7 +12,7 @@ import { MapCard } from "@/components/station-map/MapCard";
 import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
 import type { PlaceSelection } from "@/components/station-map/LocationSearch";
 import type { UserLocation } from "@/components/station-map/types";
-import { getAqiSensors } from "@/lib/aqi";
+import { getAqiSensorParams } from "@/lib/aqi";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -61,14 +61,13 @@ export default function StationMap() {
     [availableParameters]
   );
 
-  const aqiLocations = useMemo(() => {
-    return locations
-      .map((location) => ({
-        locationId: location.id,
-        sensors: getAqiSensors(location.sensors),
-      }))
-      .filter((l) => l.sensors.length > 0);
-  }, [locations]);
+  const aqiLocations = useMemo(
+    () =>
+      locations
+        .map((l) => ({ locationId: l.id, sensorParams: getAqiSensorParams(l.sensors) }))
+        .filter((l) => Object.keys(l.sensorParams).length > 0),
+    [locations]
+  );
 
   const aqiQuery = useQuery({
     queryKey: ["aqi", aqiLocations],
@@ -80,7 +79,10 @@ export default function StationMap() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locations: aqiLocations }),
       });
-      if (!res.ok) throw new Error("Could not load AQI");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { errorCode?: string };
+        throw new Error(body.errorCode ?? "openaq.unknown");
+      }
       return (await res.json()) as {
         colors: Record<number, string>;
         aqiValues: Record<number, number>;

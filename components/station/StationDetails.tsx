@@ -7,11 +7,25 @@ import { useMeasurementsQuery } from "@/components/station-map/queries/use-range
 import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
-import { getAqiSensors, PARAM_LABELS } from "@/lib/aqi";
+import { getAqiSensorParams, PARAM_LABELS } from "@/lib/aqi";
 import { HOUR_MS, floorToHourIso } from "@/lib/time";
 import type { AirQualityReading, Rollup } from "@/lib/types";
 
 const PARAMETER_LIMITS: Record<string, number> = { no2: 30, pm10: 50, pm25: 25 };
+
+type AqiCacheEntry = {
+  colors: Record<number, string>;
+  aqiValues: Record<number, number>;
+  latestValues: Record<number, Record<string, { value: number; units: string }>>;
+  subIndices?: Record<number, Record<string, number>>;
+};
+
+type AqiResult = {
+  color: string;
+  aqiValue: number | null;
+  latestValues: Record<string, { value: number; units: string }>;
+  subIndices: Record<string, number>;
+};
 
 function buildLastWeekRange(): { dateFrom: string; dateTo: string } {
   const now = Date.now();
@@ -56,33 +70,44 @@ export default function StationDetails() {
 
   const queryClient = useQueryClient();
 
-  type AqiCacheEntry = { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
-  const matchingAqiCache = queryClient
-    .getQueriesData<AqiCacheEntry>({ queryKey: ["aqi"] })
-    .find(([, d]) => d?.colors?.[locationId] !== undefined);
-  const cachedAqiData = matchingAqiCache?.[1];
-  const cachedAqi = cachedAqiData?.colors?.[locationId] !== undefined
-    ? { color: cachedAqiData.colors[locationId], aqiValue: cachedAqiData.aqiValues?.[locationId] ?? null, latestValues: cachedAqiData.latestValues?.[locationId] ?? {}, subIndices: cachedAqiData.subIndices?.[locationId] ?? {} }
-    : null;
+  const mapCacheEntry = useMemo(() => {
+    const match = queryClient
+      .getQueriesData<AqiCacheEntry>({ queryKey: ["aqi"] })
+      .find(([, d]) => d?.colors?.[locationId] !== undefined);
+    if (!match) return null;
+    const [queryKey, data] = match;
+    const result: AqiResult = {
+      color: data!.colors[locationId],
+      aqiValue: data!.aqiValues?.[locationId] ?? null,
+      latestValues: data!.latestValues?.[locationId] ?? {},
+      subIndices: data!.subIndices?.[locationId] ?? {},
+    };
+    return { result, allColors: data!.colors, updatedAt: queryClient.getQueryState(queryKey)?.dataUpdatedAt };
+  }, [queryClient, locationId]);
 
-  const aqiSensors = useMemo(
-    () => (location ? getAqiSensors(location.sensors) : []),
-    [location]
-  );
-
-  const aqiSensorIds = useMemo(() => aqiSensors.map((s) => s.sensorId), [aqiSensors]);
+  const aqiLocation = useMemo(() => {
+    if (!location) return null;
+    const sensorParams = getAqiSensorParams(location.sensors);
+    if (!Object.keys(sensorParams).length) return null;
+    return { locationId: location.id, sensorParams };
+  }, [location]);
 
   const aqiQuery = useQuery({
-    queryKey: ["aqi-single", locationId, aqiSensorIds],
-    enabled: aqiSensors.length > 0,
+    queryKey: ["aqi-single", locationId],
+    enabled: aqiLocation !== null,
     staleTime: 1000 * 60 * 60,
+    initialData: mapCacheEntry?.result,
+    initialDataUpdatedAt: mapCacheEntry?.updatedAt,
     queryFn: async () => {
       const res = await fetch("/api/aqi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locations: [{ locationId, sensors: aqiSensors }] }),
+        body: JSON.stringify({ locations: [aqiLocation] }),
       });
-      if (!res.ok) throw new Error("Could not load AQI");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { errorCode?: string };
+        throw new Error(body.errorCode ?? "openaq.unknown");
+      }
       const d = (await res.json()) as { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
       return { color: d.colors[locationId], aqiValue: d.aqiValues?.[locationId] ?? null, latestValues: d.latestValues?.[locationId] ?? {}, subIndices: d.subIndices?.[locationId] ?? {} };
     },
@@ -90,9 +115,7 @@ export default function StationDetails() {
 
   const measurementsQuery = useMeasurementsQuery(locationId, rollup, activeDateRange);
 
-  // Prefer fresh aqiQuery result; fall back to map cache only while aqiQuery is loading
-  const validCachedAqi = cachedAqi?.aqiValue != null ? cachedAqi : null;
-  const aqiData = aqiQuery.data ?? validCachedAqi ?? null;
+  const aqiData = aqiQuery.data ?? null;
 
   // Build current-values snapshot from aqiData.latestValues
   const snapshot = useMemo<StationSnapshotResponse | null>(() => {
@@ -114,6 +137,11 @@ export default function StationDetails() {
     return { locationId: location.id, rollup: "hours", readings };
   }, [location, aqiData]);
 
+  const locationColors = useMemo(
+    () => mapCacheEntry?.allColors ?? (aqiData?.color ? { [locationId]: aqiData.color } : undefined),
+    [mapCacheEntry?.allColors, aqiData?.color, locationId]
+  );
+
   const isLoading =
     locationsQuery.isPending ||
     singleLocationQuery.isFetching ||
@@ -130,6 +158,7 @@ export default function StationDetails() {
       isLoading={isLoading}
       activeSelectedLocation={location}
       locations={locationsQuery.data ?? []}
+      locationColors={locationColors}
       snapshot={snapshot}
       aqiColor={aqiData?.color}
       aqiValue={aqiData?.aqiValue ?? null}

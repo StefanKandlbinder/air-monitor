@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
+import { openaqErrorResponse } from "@/lib/openaq-errors";
 import type { OpenAQLocation } from "@/lib/types";
 
 type OpenAQLocationsResponse = {
@@ -30,11 +31,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const status = message.includes("429") ? 429 : 500;
-    const description = status === 429
-      ? "OpenAQ rate limit exceeded. Please wait a moment and try again."
-      : message;
-    return NextResponse.json({ error: description }, { status });
+    return openaqErrorResponse(error);
   }
 }

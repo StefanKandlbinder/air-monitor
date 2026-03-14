@@ -1,86 +1,57 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
 import { aqiToColor, AQI_COLORS } from "@/lib/aqi-colors";
-import { calcSubIndex, normalizeParam } from "@/lib/aqi";
-import { floorToHour, toHourIso } from "@/lib/time";
+import { calcSubIndex } from "@/lib/aqi";
+import { withConcurrency } from "@/lib/concurrency";
+import { openaqErrorResponse } from "@/lib/openaq-errors";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type SensorInput = {
-  sensorId: number;
-  param: string;
-  units: string;
+// Actual shape returned by /v3/locations/{id}/latest
+type OpenAQLatestEntry = {
+  datetime: { utc: string; local: string };
+  value: number;
+  coordinates: { latitude: number; longitude: number } | null;
+  sensorsId: number;
+  locationsId: number;
 };
+
+type OpenAQLatestResponse = { results: OpenAQLatestEntry[] };
+
+type SensorMeta = { param: string; units: string };
 
 type LocationInput = {
   locationId: number;
-  sensors: SensorInput[];
+  /** sensorsId → { param (normalized), units } for AQI-relevant sensors */
+  sensorParams: Record<number, SensorMeta>;
 };
 
-type SensorHoursResult = { value: number; period?: { datetimeFrom?: { utc?: string } } | null };
-type SensorHoursResponse = { results: SensorHoursResult[] };
+type LatestParamValue = { value: number; units: string; timestamp?: string };
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-async function fetchLatest(sensorId: number): Promise<{ value: number; timestamp: string } | null> {
-  const hourStart = floorToHour(new Date());
-  const to = new Date(hourStart.getTime() + 3_600_000); // end of current hour
-  const from = new Date(hourStart.getTime() - 24 * 60 * 60 * 1000);
+async function fetchLocationLatest(locationId: number): Promise<OpenAQLatestEntry[]> {
   try {
-    const data = await openaqGet<SensorHoursResponse>(
-      `/v3/sensors/${sensorId}/hours`,
-      { datetime_from: toHourIso(from), datetime_to: toHourIso(to), limit: "100" },
+    const data = await openaqGet<OpenAQLatestResponse>(
+      `/v3/locations/${locationId}/latest`,
+      undefined,
       { revalidate: 3600 }
     );
-    if (!data.results.length) return null;
-    // OpenAQ returns ascending by default — pick the entry with the latest timestamp
-    const latest = data.results.reduce<SensorHoursResult | null>((best, r) => {
-      if (r.value == null || r.value < 0) return best;
-      if (!best) return r;
-      const rTime = r.period?.datetimeFrom?.utc ?? "";
-      const bestTime = best.period?.datetimeFrom?.utc ?? "";
-      return rTime > bestTime ? r : best;
-    }, null);
-    if (!latest || latest.value == null) return null;
-    return { value: latest.value, timestamp: latest.period?.datetimeFrom?.utc ?? "" };
+    return data.results;
   } catch {
-    return null;
+    return [];
   }
-}
-
-/** Run tasks with at most `limit` concurrent executions. */
-async function withConcurrency<T>(
-  tasks: (() => Promise<T>)[],
-  limit: number
-): Promise<PromiseSettledResult<T>[]> {
-  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
-  let index = 0;
-
-  async function worker() {
-    while (index < tasks.length) {
-      const i = index++;
-      try {
-        results[i] = { status: "fulfilled", value: await tasks[i]() };
-      } catch (reason) {
-        results[i] = { status: "rejected", reason };
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
-  return results;
 }
 
 // ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
-
-type LatestParamValue = { value: number; units: string; timestamp?: string };
 
 export async function POST(request: Request) {
   try {
@@ -90,51 +61,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ colors: {}, latestValues: {} });
     }
 
-    // Flatten all sensor fetches into a single task list so concurrency
-    // is controlled globally, preventing OpenAQ rate limiting.
-    type SensorTask = { locationId: number; param: string; units: string; sensorId: number };
-    const allSensorTasks: SensorTask[] = locations.flatMap(({ locationId, sensors }) =>
-      sensors.map(({ sensorId, param, units }) => ({ locationId, param, units, sensorId }))
+    const locationResults = await withConcurrency(
+      locations.map(({ locationId }) => () => fetchLocationLatest(locationId)),
+      10
     );
 
-    const sensorResults = await withConcurrency(
-      allSensorTasks.map(({ sensorId, param: rawParam, units, locationId }) => async () => {
-        const param = normalizeParam(rawParam);
-        const result = await fetchLatest(sensorId);
-        if (result === null) return null;
-        const { value, timestamp } = result;
-        return { locationId, param, units, value, timestamp, subIndex: calcSubIndex(value, param, units) };
-      }),
-      10 // max 10 concurrent requests to OpenAQ
-    );
-
-    // Aggregate per-location
-    const locationData = new Map<number, { maxAqi: number | null; params: Record<string, LatestParamValue>; subIndices: Record<string, number> }>();
-    for (const { locationId } of allSensorTasks) {
-      if (!locationData.has(locationId)) {
-        locationData.set(locationId, { maxAqi: null, params: {}, subIndices: {} });
-      }
-    }
-
-    for (const r of sensorResults) {
-      if (r.status !== "fulfilled" || r.value === null) continue;
-      const { locationId, param, units, value, timestamp, subIndex } = r.value;
-      const loc = locationData.get(locationId)!;
-      loc.params[param] = { value, units, timestamp };
-      if (subIndex !== null) {
-        loc.subIndices[param] = subIndex;
-        if (loc.maxAqi === null || subIndex > loc.maxAqi) {
-          loc.maxAqi = subIndex;
-        }
-      }
-    }
-
+    const now = Date.now();
     const colors: Record<number, string> = {};
     const aqiValues: Record<number, number> = {};
     const latestValues: Record<number, Record<string, LatestParamValue>> = {};
     const subIndices: Record<number, Record<string, number>> = {};
 
-    for (const [locationId, { maxAqi, params, subIndices: si }] of locationData) {
+    for (let i = 0; i < locations.length; i++) {
+      const { locationId, sensorParams } = locations[i];
+      const result = locationResults[i];
+
+      if (result.status !== "fulfilled") {
+        colors[locationId] = AQI_COLORS.noData;
+        latestValues[locationId] = {};
+        subIndices[locationId] = {};
+        continue;
+      }
+
+      let maxAqi: number | null = null;
+      const params: Record<string, LatestParamValue> = {};
+      const si: Record<string, number> = {};
+
+      for (const entry of result.value) {
+        const meta = sensorParams[entry.sensorsId];
+        if (!meta) continue;
+        if (entry.value == null || entry.value < 0) continue;
+        const timestamp = entry.datetime?.utc ? new Date(entry.datetime.utc).getTime() : 0;
+        if (now - timestamp > MAX_AGE_MS) continue;
+
+        const subIndex = calcSubIndex(entry.value, meta.param, meta.units);
+        params[meta.param] = { value: entry.value, units: meta.units, timestamp: entry.datetime?.utc };
+        if (subIndex !== null) {
+          si[meta.param] = subIndex;
+          if (maxAqi === null || subIndex > maxAqi) maxAqi = subIndex;
+        }
+      }
+
       colors[locationId] = maxAqi !== null ? aqiToColor(maxAqi) : AQI_COLORS.noData;
       if (maxAqi !== null) aqiValues[locationId] = maxAqi;
       latestValues[locationId] = params;
@@ -146,7 +113,6 @@ export async function POST(request: Request) {
       { headers: { "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=300" } }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return openaqErrorResponse(error);
   }
 }

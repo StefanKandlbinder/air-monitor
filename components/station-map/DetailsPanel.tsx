@@ -31,6 +31,7 @@ type DetailsPanelProps = {
   isLoading: boolean;
   activeSelectedLocation: OpenAQLocation | null;
   locations: OpenAQLocation[];
+  locationColors?: Record<number, string>;
   snapshot: StationSnapshotResponse | null;
   aqiColor?: string;
   aqiValue?: number | null;
@@ -51,6 +52,7 @@ export function DetailsPanel({
   isLoading,
   activeSelectedLocation,
   locations,
+  locationColors,
   snapshot,
   aqiColor,
   aqiValue,
@@ -211,11 +213,7 @@ export function DetailsPanel({
                   <StationMapPreview
                     locations={locations}
                     activeLocation={activeSelectedLocation}
-                    locationColors={
-                      aqiColor
-                        ? { [activeSelectedLocation.id]: aqiColor }
-                        : undefined
-                    }
+                    locationColors={locationColors}
                   />
                 </div>
               </div>

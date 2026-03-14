@@ -73,6 +73,16 @@ export function getAqiSensors(
     }));
 }
 
+export function getAqiSensorParams(
+  sensors: OpenAQLocation["sensors"]
+): Record<number, { param: string; units: string }> {
+  return Object.fromEntries(
+    sensors
+      .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
+      .map((s) => [s.id, { param: normalizeParam(s.parameter.name), units: s.parameter.units }])
+  );
+}
+
 export type LocationAqi = {
   color: string;
   aqiValue: number | null;

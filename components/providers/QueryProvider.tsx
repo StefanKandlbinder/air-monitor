@@ -11,14 +11,18 @@ import { toast } from "sonner";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
 import type { Dictionary } from "@/components/providers/DictionaryProvider";
 
+const OPENAQ_ERROR_PREFIX = "openaq.";
+
 function getErrorMessage(error: unknown, dict: Dictionary): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
+  const msg =
+    error instanceof Error ? error.message : typeof error === "string" ? error : "";
+
+  if (msg.startsWith(OPENAQ_ERROR_PREFIX)) {
+    const key = msg.slice(OPENAQ_ERROR_PREFIX.length) as keyof typeof dict.openaqErrors;
+    return dict.openaqErrors[key] ?? msg;
   }
-  if (typeof error === "string" && error) {
-    return error;
-  }
-  return dict.toast.unknownRequestError;
+
+  return msg || dict.toast.unknownRequestError;
 }
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {

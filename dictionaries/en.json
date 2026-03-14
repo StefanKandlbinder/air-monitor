@@ -69,6 +69,18 @@
     "aqiFor": "Loading air quality index for {name}…",
     "data": "Loading data…"
   },
+  "openaqErrors": {
+    "unauthorized": "API key missing or invalid.",
+    "forbidden": "Access denied. Your account may be suspended.",
+    "notFound": "The requested resource could not be found.",
+    "methodNotAllowed": "This request method is not supported.",
+    "timeout": "The request timed out due to query complexity.",
+    "gone": "This resource is no longer available.",
+    "unprocessableContent": "The query parameters are invalid.",
+    "rateLimited": "Too many requests. Please wait a moment and try again.",
+    "serverError": "OpenAQ service is temporarily unavailable.",
+    "unknown": "An unexpected error occurred."
+  },
   "toast": {
     "couldNotLoadStations": "Could not load stations for this location.",
     "geolocationUnavailable": "Geolocation unavailable",

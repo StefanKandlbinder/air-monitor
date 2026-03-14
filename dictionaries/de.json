@@ -69,6 +69,18 @@
     "aqiFor": "Luftqualitätsindex für {name} wird geladen…",
     "data": "Daten werden geladen…"
   },
+  "openaqErrors": {
+    "unauthorized": "API-Schlüssel fehlt oder ist ungültig.",
+    "forbidden": "Zugriff verweigert. Ihr Konto könnte gesperrt sein.",
+    "notFound": "Die angeforderte Ressource wurde nicht gefunden.",
+    "methodNotAllowed": "Diese Anfragemethode wird nicht unterstützt.",
+    "timeout": "Die Anfrage hat zu lange gedauert.",
+    "gone": "Diese Ressource ist nicht mehr verfügbar.",
+    "unprocessableContent": "Die Abfrageparameter sind ungültig.",
+    "rateLimited": "Zu viele Anfragen. Bitte warten Sie einen Moment.",
+    "serverError": "Der OpenAQ-Dienst ist vorübergehend nicht verfügbar.",
+    "unknown": "Ein unerwarteter Fehler ist aufgetreten."
+  },
   "toast": {
     "couldNotLoadStations": "Stationen für diesen Ort konnten nicht geladen werden.",
     "geolocationUnavailable": "Standort nicht verfügbar",

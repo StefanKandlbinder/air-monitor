@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
+import type { NominatimResult } from "@/lib/types";
 
-export type NominatimResult = {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-  type: string;
-};
+export type { NominatimResult };
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
