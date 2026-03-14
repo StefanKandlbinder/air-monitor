@@ -2,11 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { RefObject } from "react";
-import Map, {
-  Marker,
-  Popup,
-  type MapRef,
-} from "react-map-gl/maplibre";
+import Map, { Marker, Popup, type MapRef } from "react-map-gl/maplibre";
 import { Compass, LocateFixed, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
@@ -23,7 +19,10 @@ type StationMapCoreProps = {
   locations: OpenAQLocation[];
   locationColors?: Record<number, string>;
   locationAqiValues?: Record<number, number>;
-  locationLatestValues?: Record<number, Record<string, { value: number; units: string }>>;
+  locationLatestValues?: Record<
+    number,
+    Record<string, { value: number; units: string }>
+  >;
   userLocation?: UserLocation | null;
   showNavigation?: boolean;
   isLocating?: boolean;
@@ -49,7 +48,9 @@ export function StationMapCore({
   onSelectLocation,
   onMoveEnd,
 }: StationMapCoreProps) {
-  const [hoveredLocation, setHoveredLocation] = useState<OpenAQLocation | null>(null);
+  const [hoveredLocation, setHoveredLocation] = useState<OpenAQLocation | null>(
+    null,
+  );
   const [bearing, setBearing] = useState(0);
   const internalRef = useRef<MapRef | null>(null);
   const activeRef = externalMapRef ?? internalRef;
@@ -63,14 +64,30 @@ export function StationMapCore({
         initialViewState={initialViewState}
         mapStyle={mapStyle}
         style={{ width: "100%", height: "100%" }}
-        onLoad={onMoveEnd ? (e) => {
-          const { lng, lat } = e.target.getCenter();
-          onMoveEnd({ longitude: lng, latitude: lat, zoom: e.target.getZoom() });
-        } : undefined}
-        onMoveEnd={onMoveEnd ? (e) => {
-          const { lng, lat } = e.target.getCenter();
-          onMoveEnd({ longitude: lng, latitude: lat, zoom: e.target.getZoom() });
-        } : undefined}
+        onLoad={
+          onMoveEnd
+            ? (e) => {
+                const { lng, lat } = e.target.getCenter();
+                onMoveEnd({
+                  longitude: lng,
+                  latitude: lat,
+                  zoom: e.target.getZoom(),
+                });
+              }
+            : undefined
+        }
+        onMoveEnd={
+          onMoveEnd
+            ? (e) => {
+                const { lng, lat } = e.target.getCenter();
+                onMoveEnd({
+                  longitude: lng,
+                  latitude: lat,
+                  zoom: e.target.getZoom(),
+                });
+              }
+            : undefined
+        }
         onRotate={(e) => setBearing(e.target.getBearing())}
       >
         {userLocation ? (
@@ -96,20 +113,21 @@ export function StationMapCore({
             <button
               className="h-4 w-4 rounded-full border-2 border-white transition hover:scale-110"
               style={{
-                backgroundColor: locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
-                boxShadow: `0 0 0 6px ${(locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR)}40`,
+                backgroundColor:
+                  locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
+                boxShadow: `0 0 0 6px ${locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR}40`,
               }}
               onClick={() => onSelectLocation(location)}
               onMouseEnter={() => setHoveredLocation(location)}
               onMouseLeave={() =>
                 setHoveredLocation((current) =>
-                  current?.id === location.id ? null : current
+                  current?.id === location.id ? null : current,
                 )
               }
               onFocus={() => setHoveredLocation(location)}
               onBlur={() =>
                 setHoveredLocation((current) =>
-                  current?.id === location.id ? null : current
+                  current?.id === location.id ? null : current,
                 )
               }
               type="button"
@@ -143,7 +161,7 @@ export function StationMapCore({
       </Map>
 
       {showNavigation ? (
-        <div className="absolute right-3 top-3 flex flex-col gap-1">
+        <div className="absolute right-4 top-4 flex flex-col gap-1">
           <Button
             variant="secondary"
             size="icon"
@@ -171,7 +189,7 @@ export function StationMapCore({
           >
             <Compass
               className="h-4 w-4 transition-transform"
-              style={{ transform: `rotate(${-bearing}deg)` }}
+              style={{ transform: `rotate(${-bearing - 45}deg)` }}
             />
           </Button>
           {onCenterOnUserLocation ? (
