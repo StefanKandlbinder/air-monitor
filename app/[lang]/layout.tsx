@@ -21,9 +21,31 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
   const dict = await getDictionary(lang);
+  const { title, titleTemplate, description, keywords } = dict.metadata;
   return {
-    title: dict.metadata.title,
-    description: dict.metadata.description,
+    title: {
+      default: title,
+      template: titleTemplate,
+    },
+    description,
+    keywords,
+    openGraph: {
+      title,
+      description,
+      locale: lang === "de" ? "de_AT" : "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    alternates: {
+      languages: {
+        de: "/de",
+        en: "/en",
+      },
+    },
   };
 }
 

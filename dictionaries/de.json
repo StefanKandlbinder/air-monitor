@@ -1,7 +1,9 @@
 {
   "metadata": {
-    "title": "Feinstaub Linz",
-    "description": "Luftqualitätsdaten und Benachrichtigungen für Linz"
+    "title": "Luftmonitor",
+    "titleTemplate": "%s – Luftmonitor",
+    "description": "Echtzeit-Luftqualitätsdaten weltweit. PM2.5, PM10, NO2, Ozon und mehr – direkt von Messstationen.",
+    "keywords": ["Luftqualität", "Feinstaub", "PM2.5", "PM10", "NO2", "AQI", "Luftmonitor", "Messstationen", "Echtzeit"]
   },
   "nav": {
     "title": "Luftmonitor"

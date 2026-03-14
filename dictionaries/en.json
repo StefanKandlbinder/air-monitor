@@ -1,7 +1,9 @@
 {
   "metadata": {
-    "title": "Feinstaub Linz",
-    "description": "Air quality data and alerts for Linz"
+    "title": "Air Monitor",
+    "titleTemplate": "%s – Air Monitor",
+    "description": "Real-time air quality data worldwide. PM2.5, PM10, NO2, ozone and more – live from monitoring stations around the globe.",
+    "keywords": ["air quality", "particulate matter", "PM2.5", "PM10", "NO2", "AQI", "air monitor", "monitoring stations", "real-time"]
   },
   "nav": {
     "title": "Air Monitor"
