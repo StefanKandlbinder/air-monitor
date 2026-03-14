@@ -9,6 +9,8 @@ import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
 import type { UserLocation } from "@/components/station-map/types";
 import { AQI_COLORS } from "@/lib/aqi-colors";
 import type { OpenAQLocation } from "@/lib/types";
+import Link from "next/link";
+import Image from "next/image";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
 
@@ -161,7 +163,7 @@ export function StationMapCore({
       </Map>
 
       {showNavigation ? (
-        <div className="absolute right-4 top-4 flex flex-col gap-1">
+        <div className="fixed left-4 bottom-4 flex flex-col gap-1">
           <Button
             variant="secondary"
             size="icon"
@@ -206,6 +208,20 @@ export function StationMapCore({
           ) : null}
         </div>
       ) : null}
+      <Link
+        href="https://openaq.org"
+        className="absolute top-4 right-4 bg-background/95 backdrop-blur rounded-md p-2 z-10"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Image
+          src="/openaq-logo.svg"
+          alt="OpenAQ"
+          width={36}
+          height={20}
+          priority
+        />
+      </Link>
     </div>
   );
 }

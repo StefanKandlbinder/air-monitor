@@ -63,7 +63,10 @@ export function MapCard({
   onMoveEnd,
 }: MapCardProps) {
   return (
-    <div className="relative overflow-hidden" style={{ height: "calc(100vh - 3.5rem)" }}>
+    <div
+      className="relative overflow-hidden"
+      style={{ height: "calc(100vh - 3.5rem)" }}
+    >
       {/* Full-height map */}
       <StationMapCore
         mapRef={mapRef}
@@ -93,11 +96,11 @@ export function MapCard({
         />
       </div>
 
-      {selectedParameters.length ? (
+      {/* {selectedParameters.length ? (
         <p className="absolute bottom-4 left-4 z-10 rounded-md bg-background/80 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
           Active filters: {selectedParameters.join(", ")}
         </p>
-      ) : null}
+      ) : null} */}
     </div>
   );
 }

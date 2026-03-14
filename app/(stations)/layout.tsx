@@ -20,20 +20,6 @@ export default function StationsLayout({
         </div>
       </header>
       {children}
-      <Link
-        href="https://openaq.org"
-        className="fixed bottom-4 left-4 bg-background/95 backdrop-blur rounded-md p-2"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Image
-          src="/openaq-logo.svg"
-          alt="OpenAQ"
-          width={36}
-          height={20}
-          priority
-        />
-      </Link>
     </div>
   );
 }
