@@ -20,6 +20,7 @@ import { StationMapPreview } from "@/components/station-map/StationMapPreview";
 import { TrendChart } from "@/components/station-map/TrendChart";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
 import { PARAM_LABELS } from "@/lib/aqi";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 import type {
   OpenAQLocation,
   OpenAQMeasurement,
@@ -64,6 +65,7 @@ export function DetailsPanel({
   measurements,
   measurementsLoading,
 }: DetailsPanelProps) {
+  const dict = useDictionary();
   const sparklineQuery = useSparklineMeasurementsQuery(
     activeSelectedLocation?.id ?? null,
   );
@@ -139,7 +141,7 @@ export function DetailsPanel({
                         style={{ backgroundColor: aqiColor }}
                       />
                       <span className="text-xs font-medium">
-                        AQI {aqiValue} · {aqiToLabel(aqiValue)}
+                        AQI {aqiValue} · {aqiToLabel(aqiValue, dict.aqi)}
                       </span>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -153,7 +155,7 @@ export function DetailsPanel({
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-3" align="start">
                           <p className="text-xs font-semibold mb-2">
-                            AQI Breakdown
+                            {dict.details.aqiBreakdown}
                           </p>
                           {aqiSubIndices &&
                           Object.keys(aqiSubIndices).length > 0 ? (
@@ -193,12 +195,11 @@ export function DetailsPanel({
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground">
-                              No breakdown available.
+                              {dict.details.noBreakdown}
                             </p>
                           )}
                           <p className="text-[10px] text-muted-foreground mt-2.5 border-t pt-2">
-                            AQI is the highest sub-index across all pollutants
-                            (US EPA formula).
+                            {dict.details.aqiFormula}
                           </p>
                         </PopoverContent>
                       </Popover>
@@ -232,7 +233,7 @@ export function DetailsPanel({
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No station selected.
+              {dict.details.noStationSelected}
             </p>
           )}
         </CardContent>
@@ -249,14 +250,14 @@ export function DetailsPanel({
               onDateToChange={onDateToChange}
               onClearDateRange={onClearDateRange}
             />
-            <ButtonGroup aria-label="Aggregation period" className="shrink-0">
+            <ButtonGroup aria-label={dict.details.aggregationPeriod} className="shrink-0">
               <Button
                 variant={rollup === "hours" ? "default" : "outline"}
                 size="sm"
                 onClick={() => onRollupChange("hours")}
                 type="button"
               >
-                Hourly
+                {dict.details.hourly}
               </Button>
               <Button
                 variant={rollup === "days" ? "default" : "outline"}
@@ -264,7 +265,7 @@ export function DetailsPanel({
                 onClick={() => onRollupChange("days")}
                 type="button"
               >
-                Daily
+                {dict.details.daily}
               </Button>
             </ButtonGroup>
           </div>

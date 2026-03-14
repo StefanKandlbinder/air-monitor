@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { OpenAQLocation } from "@/lib/types";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 const TOAST_ID = "openaq-loading";
 
@@ -16,6 +17,7 @@ const OpenAQLogo = (
 );
 
 function useLoadingMessage(): string | null {
+  const dict = useDictionary();
   const queryClient = useQueryClient();
   const fetchingLocations = useIsFetching({ queryKey: ["locations"] });
   const fetchingLocation = useIsFetching({ queryKey: ["location"] });
@@ -23,17 +25,17 @@ function useLoadingMessage(): string | null {
   const fetchingAqiSingle = useIsFetching({ queryKey: ["aqi-single"] });
   const fetchingMeasurements = useIsFetching({ queryKey: ["measurements"] });
 
-  if (fetchingLocations) return "Loading stations…";
-  if (fetchingLocation) return "Loading station…";
+  if (fetchingLocations) return dict.loading.stations;
+  if (fetchingLocation) return dict.loading.station;
   if (fetchingMeasurements) {
     const active = queryClient.getQueryCache().findAll({ queryKey: ["measurements"], fetchStatus: "fetching" });
     const locationId = active[0]?.queryKey[1] as number | undefined;
     if (locationId) {
       const locations = queryClient.getQueryData<OpenAQLocation[]>(["locations"]);
       const name = locations?.find((l) => l.id === locationId)?.name;
-      if (name) return `Loading measurements for ${name}…`;
+      if (name) return dict.loading.measurementsFor.replace("{name}", name);
     }
-    return "Loading measurements…";
+    return dict.loading.measurements;
   }
   if (fetchingAqiSingle) {
     const active = queryClient.getQueryCache().findAll({ queryKey: ["aqi-single"], fetchStatus: "fetching" });
@@ -41,21 +43,22 @@ function useLoadingMessage(): string | null {
     if (locationId) {
       const locations = queryClient.getQueryData<OpenAQLocation[]>(["locations"]);
       const name = locations?.find((l) => l.id === locationId)?.name;
-      if (name) return `Loading air quality index for ${name}…`;
+      if (name) return dict.loading.aqiFor.replace("{name}", name);
     }
-    return "Loading air quality index…";
+    return dict.loading.aqi;
   }
-  if (fetchingAqi) return "Loading air quality index…";
+  if (fetchingAqi) return dict.loading.aqi;
   return null;
 }
 
 export function GlobalLoadingBar() {
+  const dict = useDictionary();
   const isFetching = useIsFetching();
   const message = useLoadingMessage();
 
   useEffect(() => {
     if (isFetching > 0) {
-      toast.loading(message ?? "Loading data…", {
+      toast.loading(message ?? dict.loading.data, {
         id: TOAST_ID,
         icon: OpenAQLogo,
       });

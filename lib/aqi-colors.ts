@@ -23,11 +23,29 @@ export function aqiToColor(aqi: number): string {
   return AQI_COLORS.hazardous;
 }
 
-export function aqiToLabel(aqi: number): string {
-  if (aqi <= 50)  return "Good";
-  if (aqi <= 100) return "Moderate";
-  if (aqi <= 150) return "Unhealthy for Sensitive Groups";
-  if (aqi <= 200) return "Unhealthy";
-  if (aqi <= 300) return "Very Unhealthy";
-  return "Hazardous";
+export type AQILabels = {
+  good: string;
+  moderate: string;
+  unhealthySensitive: string;
+  unhealthy: string;
+  veryUnhealthy: string;
+  hazardous: string;
+};
+
+const DEFAULT_AQI_LABELS: AQILabels = {
+  good: "Good",
+  moderate: "Moderate",
+  unhealthySensitive: "Unhealthy for Sensitive Groups",
+  unhealthy: "Unhealthy",
+  veryUnhealthy: "Very Unhealthy",
+  hazardous: "Hazardous",
+};
+
+export function aqiToLabel(aqi: number, labels: AQILabels = DEFAULT_AQI_LABELS): string {
+  if (aqi <= 50)  return labels.good;
+  if (aqi <= 100) return labels.moderate;
+  if (aqi <= 150) return labels.unhealthySensitive;
+  if (aqi <= 200) return labels.unhealthy;
+  if (aqi <= 300) return labels.veryUnhealthy;
+  return labels.hazardous;
 }

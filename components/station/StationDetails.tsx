@@ -25,7 +25,8 @@ function resolveRollup(period: string): Rollup {
 }
 
 export default function StationDetails() {
-  const params = useParams<{ id: string; period: string }>();
+  const params = useParams<{ id: string; period: string; lang?: string }>();
+  const lang = params.lang ?? "de";
 
   const locationId = Number(params.id);
   const [rollup, setRollup] = useState<Rollup>(() =>
@@ -121,7 +122,7 @@ export default function StationDetails() {
 
   const handleRollupChange = (nextRollup: Rollup): void => {
     setRollup(nextRollup);
-    window.history.replaceState(null, "", `/station/${locationId}/${nextRollup}`);
+    window.history.replaceState(null, "", `/${lang}/station/${locationId}/${nextRollup}`);
   };
 
   return (

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { OpenAQLocation } from "@/lib/types";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 const DISPLAY_PARAMS = ["no2", "pm10", "pm25"] as const;
 const PARAM_LABEL: Record<string, string> = { no2: "NO₂", pm10: "PM10", pm25: "PM2.5" };
@@ -25,6 +26,7 @@ type HoverPopupCardProps = {
 };
 
 export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: HoverPopupCardProps) {
+  const dict = useDictionary();
   // Use the most recent measurement timestamp from latestValues; fall back to datetimeLast
   const updatedAt = useMemo(() => {
     if (latestValues) {
@@ -71,7 +73,7 @@ export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: H
         {aqiColor && aqiValue != null ? (
           <CardDescription className="flex items-center gap-1.5 text-[11px] font-medium">
             <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: aqiColor }} />
-            AQI {aqiValue} · {aqiToLabel(aqiValue)}
+            AQI {aqiValue} · {aqiToLabel(aqiValue, dict.aqi)}
           </CardDescription>
         ) : null}
       </CardHeader>
@@ -92,7 +94,7 @@ export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: H
         <div className="space-y-1">
           <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Layers className="h-3 w-3" />
-            Available parameters
+            {dict.hoverPopup.availableParameters}
           </p>
           <div className="flex flex-wrap gap-1">
             {uniqueParams.slice(0, 6).map((param) => (

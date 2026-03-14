@@ -11,6 +11,7 @@ import { AQI_COLORS } from "@/lib/aqi-colors";
 import type { OpenAQLocation } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
 
@@ -50,6 +51,7 @@ export function StationMapCore({
   onSelectLocation,
   onMoveEnd,
 }: StationMapCoreProps) {
+  const dict = useDictionary();
   const [hoveredLocation, setHoveredLocation] = useState<OpenAQLocation | null>(
     null,
   );
@@ -100,7 +102,7 @@ export function StationMapCore({
           >
             <div
               className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]"
-              aria-label="Your current location"
+              aria-label={dict.map.yourCurrentLocation}
             />
           </Marker>
         ) : null}
@@ -169,7 +171,7 @@ export function StationMapCore({
             size="icon"
             className="h-8 w-8 shadow-md"
             onClick={() => map()?.zoomIn()}
-            aria-label="Zoom in"
+            aria-label={dict.map.zoomIn}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -178,7 +180,7 @@ export function StationMapCore({
             size="icon"
             className="h-8 w-8 shadow-md"
             onClick={() => map()?.zoomOut()}
-            aria-label="Zoom out"
+            aria-label={dict.map.zoomOut}
           >
             <Minus className="h-4 w-4" />
           </Button>
@@ -187,7 +189,7 @@ export function StationMapCore({
             size="icon"
             className="h-8 w-8 shadow-md"
             onClick={() => map()?.resetNorth({ duration: 300 })}
-            aria-label="Reset north"
+            aria-label={dict.map.resetNorth}
           >
             <Compass
               className="h-4 w-4 transition-transform"
@@ -201,7 +203,7 @@ export function StationMapCore({
               className="h-8 w-8 shadow-md"
               onClick={onCenterOnUserLocation}
               disabled={isLocating}
-              aria-label="My location"
+              aria-label={dict.map.myLocation}
             >
               <LocateFixed className="h-4 w-4" />
             </Button>

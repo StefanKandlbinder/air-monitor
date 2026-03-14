@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "title": "Feinstaub Linz",
+    "description": "Luftqualitätsdaten und Benachrichtigungen für Linz"
+  },
+  "nav": {
+    "title": "Luftmonitor"
+  },
+  "map": {
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "resetNorth": "Norden zurücksetzen",
+    "myLocation": "Mein Standort",
+    "yourCurrentLocation": "Ihr aktueller Standort"
+  },
+  "locationSearch": {
+    "placeholder": "Ort suchen…",
+    "searching": "Wird gesucht…",
+    "noPlacesFound": "Keine Orte gefunden.",
+    "places": "Orte"
+  },
+  "filter": {
+    "ariaLabel": "Stationen filtern",
+    "description": "Stationen nach Parameter filtern",
+    "clear": "Zurücksetzen",
+    "airQuality": "Luftqualität",
+    "meteorological": "Meteorologisch",
+    "other": "Sonstige"
+  },
+  "details": {
+    "aqiBreakdown": "AQI-Aufschlüsselung",
+    "noBreakdown": "Keine Aufschlüsselung verfügbar.",
+    "aqiFormula": "Der AQI ist der höchste Teilindex aller Schadstoffe (US-EPA-Formel).",
+    "hourly": "Stündlich",
+    "daily": "Täglich",
+    "noStationSelected": "Keine Station ausgewählt.",
+    "aggregationPeriod": "Aggregationszeitraum"
+  },
+  "dateRange": {
+    "selectRange": "Zeitraum auswählen",
+    "startTime": "Startzeit",
+    "endTime": "Endzeit",
+    "reset": "Zurücksetzen",
+    "apply": "Anwenden"
+  },
+  "hoverPopup": {
+    "availableParameters": "Verfügbare Parameter"
+  },
+  "breadcrumb": {
+    "map": "Karte"
+  },
+  "chart": {
+    "noData": "Keine Daten für den gewählten Zeitraum verfügbar."
+  },
+  "aqi": {
+    "good": "Gut",
+    "moderate": "Mäßig",
+    "unhealthySensitive": "Ungesund für empfindliche Gruppen",
+    "unhealthy": "Ungesund",
+    "veryUnhealthy": "Sehr ungesund",
+    "hazardous": "Gefährlich"
+  },
+  "loading": {
+    "stations": "Stationen werden geladen…",
+    "station": "Station wird geladen…",
+    "measurements": "Messwerte werden geladen…",
+    "measurementsFor": "Messwerte für {name} werden geladen…",
+    "aqi": "Luftqualitätsindex wird geladen…",
+    "aqiFor": "Luftqualitätsindex für {name} wird geladen…",
+    "data": "Daten werden geladen…"
+  },
+  "toast": {
+    "couldNotLoadStations": "Stationen für diesen Ort konnten nicht geladen werden.",
+    "geolocationUnavailable": "Standort nicht verfügbar",
+    "geolocationNotSupported": "Geolokalisierung wird von diesem Browser nicht unterstützt.",
+    "couldNotDetermineLocation": "Standort konnte nicht ermittelt werden",
+    "locationLookupFailed": "Standortsuche fehlgeschlagen.",
+    "noStationsFound": "Keine Stationen innerhalb von 25 km gefunden.",
+    "unexpectedError": "Unerwarteter Anwendungsfehler",
+    "unknownError": "Ein unbekannter Fehler ist aufgetreten.",
+    "unhandledRejection": "Unbehandelter Fehler",
+    "unhandledRequestFailed": "Eine Anfrage ist fehlgeschlagen.",
+    "requestFailed": "Anfrage fehlgeschlagen",
+    "actionFailed": "Aktion fehlgeschlagen",
+    "unknownRequestError": "Ein unbekannter Anfragefehler ist aufgetreten."
+  }
+}

@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 type DateRangePickerProps = {
   dateFrom: string;
@@ -43,6 +44,7 @@ export function DateRangePicker({
   onDateToChange,
   onClearDateRange,
 }: DateRangePickerProps) {
+  const dict = useDictionary();
   const [open, setOpen] = useState(false);
 
   const [draftFrom, setDraftFrom] = useState<Date | undefined>(() => isoToDate(dateFrom));
@@ -86,7 +88,7 @@ export function DateRangePicker({
       ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – ${format(committedToDate, "MMM d, yyyy")} ${committedToTime}`
       : committedFromDate
         ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – …`
-        : "Select date range";
+        : dict.dateRange.selectRange;
 
   const canApply = !!draftFrom && !!draftTo;
 
@@ -112,7 +114,7 @@ export function DateRangePicker({
         />
         <div className="grid grid-cols-2 gap-3 border-t p-3">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Start time</label>
+            <label className="text-xs text-muted-foreground">{dict.dateRange.startTime}</label>
             <input
               type="time"
               value={draftFromTime}
@@ -122,7 +124,7 @@ export function DateRangePicker({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">End time</label>
+            <label className="text-xs text-muted-foreground">{dict.dateRange.endTime}</label>
             <input
               type="time"
               value={draftToTime}
@@ -140,7 +142,7 @@ export function DateRangePicker({
             className="flex-1 text-xs"
             onClick={handleReset}
           >
-            Reset
+            {dict.dateRange.reset}
           </Button>
           <Button
             size="sm"
@@ -149,7 +151,7 @@ export function DateRangePicker({
             onClick={handleApply}
             disabled={!canApply}
           >
-            Apply
+            {dict.dateRange.apply}
           </Button>
         </div>
       </PopoverContent>

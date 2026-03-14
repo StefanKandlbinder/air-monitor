@@ -2,12 +2,16 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 export function GlobalToastListener() {
+  const dict = useDictionary();
+  const { unexpectedError, unknownError, unhandledRejection, unhandledRequestFailed } = dict.toast;
+
   useEffect(() => {
     const onGlobalError = (event: ErrorEvent) => {
-      toast.error("Unexpected application error", {
-        description: event.message || "An unknown error occurred.",
+      toast.error(unexpectedError, {
+        description: event.message || unknownError,
       });
     };
 
@@ -17,9 +21,9 @@ export function GlobalToastListener() {
           ? event.reason.message
           : typeof event.reason === "string"
             ? event.reason
-            : "An unhandled request failed.";
+            : unhandledRequestFailed;
 
-      toast.error("Unhandled promise rejection", {
+      toast.error(unhandledRejection, {
         description: reason,
       });
     };
@@ -31,7 +35,7 @@ export function GlobalToastListener() {
       window.removeEventListener("error", onGlobalError);
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
-  }, []);
+  }, [unexpectedError, unknownError, unhandledRejection, unhandledRequestFailed]);
 
   return null;
 }

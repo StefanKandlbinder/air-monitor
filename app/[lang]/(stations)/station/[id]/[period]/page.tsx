@@ -4,6 +4,7 @@ import StationBreadcrumb from "@/components/station/StationBreadcrumb";
 import type { Rollup } from "@/lib/types";
 
 type Params = {
+  lang: string;
   id: string;
   period: string;
 };
@@ -29,7 +30,6 @@ export default async function StationPeriodPage({
   return (
     <>
       <StationBreadcrumb locationId={Number(id)} />
-
       <StationDetails key={id} />
     </>
   );

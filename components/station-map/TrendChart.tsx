@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OpenAQMeasurement } from "@/lib/types";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -42,6 +43,7 @@ export function TrendChart({
   dateFrom,
   dateTo,
 }: TrendChartProps) {
+  const dict = useDictionary();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
@@ -149,7 +151,7 @@ export function TrendChart({
   if (!trendData.length) {
     return (
       <p className="text-xs text-muted-foreground">
-        No data available for selected range.
+        {dict.chart.noData}
       </p>
     );
   }

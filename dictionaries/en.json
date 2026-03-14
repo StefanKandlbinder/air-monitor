@@ -1,0 +1,87 @@
+{
+  "metadata": {
+    "title": "Feinstaub Linz",
+    "description": "Air quality data and alerts for Linz"
+  },
+  "nav": {
+    "title": "Air Monitor"
+  },
+  "map": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetNorth": "Reset north",
+    "myLocation": "My location",
+    "yourCurrentLocation": "Your current location"
+  },
+  "locationSearch": {
+    "placeholder": "Search any location…",
+    "searching": "Searching…",
+    "noPlacesFound": "No places found.",
+    "places": "Places"
+  },
+  "filter": {
+    "ariaLabel": "Filter stations",
+    "description": "Filter stations by parameter",
+    "clear": "Clear",
+    "airQuality": "Air quality",
+    "meteorological": "Meteorological",
+    "other": "Other"
+  },
+  "details": {
+    "aqiBreakdown": "AQI Breakdown",
+    "noBreakdown": "No breakdown available.",
+    "aqiFormula": "AQI is the highest sub-index across all pollutants (US EPA formula).",
+    "hourly": "Hourly",
+    "daily": "Daily",
+    "noStationSelected": "No station selected.",
+    "aggregationPeriod": "Aggregation period"
+  },
+  "dateRange": {
+    "selectRange": "Select date range",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "reset": "Reset",
+    "apply": "Apply"
+  },
+  "hoverPopup": {
+    "availableParameters": "Available parameters"
+  },
+  "breadcrumb": {
+    "map": "Map"
+  },
+  "chart": {
+    "noData": "No data available for selected range."
+  },
+  "aqi": {
+    "good": "Good",
+    "moderate": "Moderate",
+    "unhealthySensitive": "Unhealthy for Sensitive Groups",
+    "unhealthy": "Unhealthy",
+    "veryUnhealthy": "Very Unhealthy",
+    "hazardous": "Hazardous"
+  },
+  "loading": {
+    "stations": "Loading stations…",
+    "station": "Loading station…",
+    "measurements": "Loading measurements…",
+    "measurementsFor": "Loading measurements for {name}…",
+    "aqi": "Loading air quality index…",
+    "aqiFor": "Loading air quality index for {name}…",
+    "data": "Loading data…"
+  },
+  "toast": {
+    "couldNotLoadStations": "Could not load stations for this location.",
+    "geolocationUnavailable": "Geolocation unavailable",
+    "geolocationNotSupported": "Geolocation is not supported by this browser.",
+    "couldNotDetermineLocation": "Could not determine your location",
+    "locationLookupFailed": "Location lookup failed.",
+    "noStationsFound": "No stations found within 25 km of this location.",
+    "unexpectedError": "Unexpected application error",
+    "unknownError": "An unknown error occurred.",
+    "unhandledRejection": "Unhandled promise rejection",
+    "unhandledRequestFailed": "An unhandled request failed.",
+    "requestFailed": "Request failed",
+    "actionFailed": "Action failed",
+    "unknownRequestError": "An unknown request error occurred."
+  }
+}

@@ -25,6 +25,7 @@ import {
 } from "@/components/station-map/queries/use-place-search-query";
 import type { GroupedParameters } from "@/components/station-map/types";
 import { FilterPopover } from "@/components/station-map/FilterPopover";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 export type PlaceSelection = {
   lat: number;
@@ -49,6 +50,7 @@ export function LocationSearch({
   onToggleParameter,
   onClearParameters,
 }: LocationSearchProps) {
+  const dict = useDictionary();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -138,7 +140,7 @@ export function LocationSearch({
                 }
               }
             }}
-            placeholder={selectedLabel ?? "Search any location…"}
+            placeholder={selectedLabel ?? dict.locationSearch.placeholder}
           />
           <InputGroupAddon className="mr-0 pr-1.5" align="inline-end">
             <FilterPopover
@@ -158,11 +160,11 @@ export function LocationSearch({
         <Command ref={commandRef} shouldFilter={false}>
           <CommandList>
             {isFetching ? (
-              <CommandEmpty>Searching…</CommandEmpty>
+              <CommandEmpty>{dict.locationSearch.searching}</CommandEmpty>
             ) : results.length === 0 ? (
-              <CommandEmpty>No places found.</CommandEmpty>
+              <CommandEmpty>{dict.locationSearch.noPlacesFound}</CommandEmpty>
             ) : (
-              <CommandGroup heading="Places">
+              <CommandGroup heading={dict.locationSearch.places}>
                 {results.map((result) => (
                   <CommandItem
                     key={result.place_id}

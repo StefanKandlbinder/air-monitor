@@ -20,7 +20,7 @@ export function ParameterReadingCard({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <Cloud className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <p className="text-sm font-medium truncate">
+            <p className="text-sm font-medium truncate font-mono">
               {reading.displayName}:{" "}
             </p>
             <p className="text-sm font-mono">

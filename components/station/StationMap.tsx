@@ -6,6 +6,7 @@ import type { MapRef } from "react-map-gl/maplibre";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 import { groupParameters, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
 import { MapCard } from "@/components/station-map/MapCard";
 import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
@@ -16,13 +17,15 @@ import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
   const router = useRouter();
-  const params = useParams<{ id?: string; period?: string }>();
+  const params = useParams<{ id?: string; period?: string; lang?: string }>();
+  const lang = params.lang ?? "de";
   const routeLocationId =
     typeof params.id === "string" && params.id.trim()
       ? Number(params.id)
       : null;
   const routePeriod =
     typeof params.period === "string" ? params.period : "hours";
+  const dict = useDictionary();
 
   const mapRef = useRef<MapRef | null>(null);
   const { resolvedTheme } = useTheme();
@@ -141,7 +144,7 @@ export default function StationMap() {
       setSearchLocations(data.locations);
       return data.locations;
     } catch (err) {
-      toast.error("Could not load stations for this location.", {
+      toast.error(dict.toast.couldNotLoadStations, {
         description: err instanceof Error ? err.message : undefined,
       });
       return null;
@@ -222,8 +225,8 @@ export default function StationMap() {
 
   const centerOnUserLocation = (): void => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation unavailable", {
-        description: "Geolocation is not supported by this browser.",
+      toast.error(dict.toast.geolocationUnavailable, {
+        description: dict.toast.geolocationNotSupported,
       });
       return;
     }
@@ -246,8 +249,8 @@ export default function StationMap() {
         setIsLocating(false);
       },
       (error) => {
-        toast.error("Could not determine your location", {
-          description: error.message || "Location lookup failed.",
+        toast.error(dict.toast.couldNotDetermineLocation, {
+          description: error.message || dict.toast.locationLookupFailed,
         });
         setIsLocating(false);
       },
@@ -258,7 +261,7 @@ export default function StationMap() {
   const handleLocationSelect = (location: OpenAQLocation): void => {
     const period =
       routeLocationId !== null && routePeriod ? routePeriod : "hours";
-    router.push(`/station/${location.id}/${period}`);
+    router.push(`/${lang}/station/${location.id}/${period}`);
   };
 
   const handlePlaceSelect = async (place: PlaceSelection): Promise<void> => {
@@ -268,7 +271,7 @@ export default function StationMap() {
     const result = await loadStationsAt(place.lat, place.lon);
     if (result !== null) {
       setSelectedParameters([]);
-      if (result.length === 0) toast.info("No stations found within 25 km of this location.");
+      if (result.length === 0) toast.info(dict.toast.noStationsFound);
     }
   };
 

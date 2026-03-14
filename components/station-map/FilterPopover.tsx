@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 import type { GroupedParameters } from "@/components/station-map/types";
 import { ParameterSection } from "@/components/station-map/ParameterSection";
+import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 type FilterPopoverProps = {
   groupedParameters: GroupedParameters;
@@ -26,13 +27,14 @@ export function FilterPopover({
   onToggleParameter,
   onClear,
 }: FilterPopoverProps) {
+  const dict = useDictionary();
   return (
     <Popover>
       <PopoverTrigger asChild>
         <InputGroupButton
           size="icon-sm"
           variant="ghost"
-          aria-label="Filter stations"
+          aria-label={dict.filter.ariaLabel}
           className="relative text-foreground hover:bg-muted hover:text-foreground"
         >
           <Filter />
@@ -49,7 +51,7 @@ export function FilterPopover({
       <PopoverContent align="start" className="w-80 p-3">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Filter stations by parameter
+            {dict.filter.description}
           </p>
           {selectedParameters.length ? (
             <Button
@@ -60,25 +62,25 @@ export function FilterPopover({
               className="h-7 px-2 text-xs"
             >
               <X className="mr-1 h-3.5 w-3.5" />
-              Clear
+              {dict.filter.clear}
             </Button>
           ) : null}
         </div>
         <div className="max-h-56 space-y-3 overflow-auto pr-1">
           <ParameterSection
-            title="Air quality"
+            title={dict.filter.airQuality}
             parameters={groupedParameters.airQuality}
             selectedParameters={selectedParameters}
             onToggleParameter={onToggleParameter}
           />
           <ParameterSection
-            title="Meteorological"
+            title={dict.filter.meteorological}
             parameters={groupedParameters.meteorological}
             selectedParameters={selectedParameters}
             onToggleParameter={onToggleParameter}
           />
           <ParameterSection
-            title="Other"
+            title={dict.filter.other}
             parameters={groupedParameters.other}
             selectedParameters={selectedParameters}
             onToggleParameter={onToggleParameter}
