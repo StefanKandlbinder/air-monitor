@@ -5,10 +5,12 @@ import dayjs from "dayjs";
 import { Clock, Layers, MapPin } from "lucide-react";
 import { aqiToLabel } from "@/lib/aqi-colors";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,9 +25,10 @@ type HoverPopupCardProps = {
   aqiValue?: number;
   aqiColor?: string;
   latestValues?: Record<string, { value: number; units: string; timestamp?: string }>;
+  onGoToDetail?: () => void;
 };
 
-export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: HoverPopupCardProps) {
+export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues, onGoToDetail }: HoverPopupCardProps) {
   const dict = useDictionary();
   // Use the most recent measurement timestamp from latestValues; fall back to datetimeLast
   const updatedAt = useMemo(() => {
@@ -110,6 +113,13 @@ export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues }: H
           </div>
         </div>
       </CardContent>
+      {onGoToDetail ? (
+        <CardFooter className="px-3 pb-3 pt-0">
+          <Button size="sm" className="w-full" onClick={onGoToDetail}>
+            {dict.hoverPopup.goToDetail}
+          </Button>
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }

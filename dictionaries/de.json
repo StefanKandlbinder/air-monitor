@@ -46,7 +46,8 @@
     "apply": "Anwenden"
   },
   "hoverPopup": {
-    "availableParameters": "Verfügbare Parameter"
+    "availableParameters": "Verfügbare Parameter",
+    "goToDetail": "Auf Detailseite wechseln"
   },
   "breadcrumb": {
     "map": "Karte"

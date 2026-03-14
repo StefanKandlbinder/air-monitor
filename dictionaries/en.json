@@ -46,7 +46,8 @@
     "apply": "Apply"
   },
   "hoverPopup": {
-    "availableParameters": "Available parameters"
+    "availableParameters": "Available parameters",
+    "goToDetail": "Go to detail page"
   },
   "breadcrumb": {
     "map": "Map"

@@ -12,6 +12,7 @@ import type { OpenAQLocation } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
+import { useTouchDevice } from "@/hooks/use-touch-device";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
 
@@ -55,6 +56,10 @@ export function StationMapCore({
   const [hoveredLocation, setHoveredLocation] = useState<OpenAQLocation | null>(
     null,
   );
+  const [clickedLocation, setClickedLocation] = useState<OpenAQLocation | null>(
+    null,
+  );
+  const isTouchDevice = useTouchDevice();
   const [bearing, setBearing] = useState(0);
   const internalRef = useRef<MapRef | null>(null);
   const activeRef = externalMapRef ?? internalRef;
@@ -115,35 +120,56 @@ export function StationMapCore({
             anchor="bottom"
           >
             <button
-              className="h-4 w-4 rounded-full border-2 border-white transition hover:scale-110"
-              style={{
-                backgroundColor:
-                  locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
-                boxShadow: `0 0 0 6px ${locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR}40`,
+              className={`${isTouchDevice ? "h-10 w-10" : "h-5 w-5"} cursor-pointer flex items-center justify-center rounded-full transition hover:scale-110`}
+              onClick={() => {
+                if (isTouchDevice) {
+                  setClickedLocation((current) =>
+                    current?.id === location.id ? null : location,
+                  );
+                } else {
+                  onSelectLocation(location);
+                }
               }}
-              onClick={() => onSelectLocation(location)}
-              onMouseEnter={() => setHoveredLocation(location)}
+              onMouseEnter={() =>
+                !isTouchDevice && setHoveredLocation(location)
+              }
               onMouseLeave={() =>
+                !isTouchDevice &&
                 setHoveredLocation((current) =>
                   current?.id === location.id ? null : current,
                 )
               }
-              onFocus={() => setHoveredLocation(location)}
+              onFocus={() => !isTouchDevice && setHoveredLocation(location)}
               onBlur={() =>
+                !isTouchDevice &&
                 setHoveredLocation((current) =>
                   current?.id === location.id ? null : current,
                 )
               }
               type="button"
               aria-label={`Open ${location.name}`}
-            />
+            >
+              <div
+                className="h-5 w-5 rounded-full border-2 border-white"
+                style={{
+                  backgroundColor: locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
+                  boxShadow: `0 0 0 6px ${locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR}40`,
+                }}
+              />
+            </button>
           </Marker>
         ))}
 
-        {hoveredLocation ? (
+        {(isTouchDevice ? clickedLocation : hoveredLocation) ? (
           <Popup
-            longitude={hoveredLocation.coordinates.longitude}
-            latitude={hoveredLocation.coordinates.latitude}
+            longitude={
+              (isTouchDevice ? clickedLocation! : hoveredLocation!).coordinates
+                .longitude
+            }
+            latitude={
+              (isTouchDevice ? clickedLocation! : hoveredLocation!).coordinates
+                .latitude
+            }
             anchor="top"
             closeOnClick={false}
             closeButton={false}
@@ -154,12 +180,25 @@ export function StationMapCore({
               backgroundColor: "transparent",
             }}
           >
-            <HoverPopupCard
-              location={hoveredLocation}
-              aqiValue={locationAqiValues?.[hoveredLocation.id]}
-              aqiColor={locationColors?.[hoveredLocation.id]}
-              latestValues={locationLatestValues?.[hoveredLocation.id]}
-            />
+            {(() => {
+              const loc = isTouchDevice ? clickedLocation! : hoveredLocation!;
+              return (
+                <HoverPopupCard
+                  location={loc}
+                  aqiValue={locationAqiValues?.[loc.id]}
+                  aqiColor={locationColors?.[loc.id]}
+                  latestValues={locationLatestValues?.[loc.id]}
+                  onGoToDetail={
+                    isTouchDevice
+                      ? () => {
+                          setClickedLocation(null);
+                          onSelectLocation(loc);
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })()}
           </Popup>
         ) : null}
       </Map>
