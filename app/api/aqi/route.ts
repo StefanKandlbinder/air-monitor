@@ -40,7 +40,7 @@ async function fetchLatest(sensorId: number): Promise<{ value: number; timestamp
     if (!data.results.length) return null;
     // OpenAQ returns ascending by default — pick the entry with the latest timestamp
     const latest = data.results.reduce<SensorHoursResult | null>((best, r) => {
-      if (r.value == null) return best;
+      if (r.value == null || r.value < 0) return best;
       if (!best) return r;
       const rTime = r.period?.datetimeFrom?.utc ?? "";
       const bestTime = best.period?.datetimeFrom?.utc ?? "";

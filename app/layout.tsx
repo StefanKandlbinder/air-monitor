@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
-import { GlobalLoadingBar } from "@/components/GlobalLoadingBar";
-import { GlobalToastListener } from "@/components/GlobalToastListener";
-import { QueryProvider } from "@/components/QueryProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { GlobalLoadingBar } from "@/components/layout/GlobalLoadingBar";
+import { GlobalToastListener } from "@/components/layout/GlobalToastListener";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {

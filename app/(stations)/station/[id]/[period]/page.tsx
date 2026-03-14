@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import StationDetails from "@/components/StationDetails";
-import StationBreadcrumb from "@/components/StationBreadcrumb";
+import StationDetails from "@/components/station/StationDetails";
+import StationBreadcrumb from "@/components/station/StationBreadcrumb";
 import type { Rollup } from "@/lib/types";
 
 type Params = {

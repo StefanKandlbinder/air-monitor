@@ -1,4 +1,5 @@
-import ThemeToggle from "@/components/ThemeToggle";
+import Link from "next/link";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 
 export default function StationsLayout({
   children,
@@ -6,13 +7,16 @@ export default function StationsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        <div className="flex justify-end">
+    <div className="flex flex-col min-h-screen">
+      <header className="sticky top-0 z-50 h-14 border-b bg-background/95 backdrop-blur">
+        <div className="flex h-full w-full items-center justify-between px-6">
+          <Link href="/" className="text-sm font-semibold tracking-tight">
+            openaq Air Monitor
+          </Link>
           <ThemeToggle />
         </div>
-        {children}
-      </main>
-    </>
+      </header>
+      {children}
+    </div>
   );
 }

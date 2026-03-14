@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
@@ -50,15 +50,15 @@ export function DateRangePicker({
   const [draftFromTime, setDraftFromTime] = useState(() => getTimePart(dateFrom, "00:00"));
   const [draftToTime, setDraftToTime] = useState(() => getTimePart(dateTo, "23:59"));
 
-  // Sync draft state when popover opens
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
       setDraftFrom(isoToDate(dateFrom));
       setDraftTo(isoToDate(dateTo));
       setDraftFromTime(getTimePart(dateFrom, "00:00"));
       setDraftToTime(getTimePart(dateTo, "23:59"));
     }
-  }, [open]);
+    setOpen(next);
+  };
 
   const handleRangeSelect = (next: DateRange | undefined): void => {
     setDraftFrom(next?.from);
@@ -91,7 +91,7 @@ export function DateRangePicker({
   const canApply = !!draftFrom && !!draftTo;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

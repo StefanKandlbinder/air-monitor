@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Cloud, Info, MapPin } from "lucide-react";
+import { useSparklineMeasurementsQuery } from "@/components/station-map/queries/use-sparkline-measurements-query";
+import { Clock, Info, MapPin } from "lucide-react";
 import dayjs from "dayjs";
-import { Badge } from "@/components/ui/badge";
 import { aqiToColor, aqiToLabel } from "@/lib/aqi-colors";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -14,12 +14,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ParameterReadingCard } from "@/components/station-map/ParameterReadingCard";
 import { DateRangePicker } from "@/components/station-map/DateRangePicker";
 import { StationMapPreview } from "@/components/station-map/StationMapPreview";
 import { TrendChart } from "@/components/station-map/TrendChart";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
 import { PARAM_LABELS } from "@/lib/aqi";
-import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";
+import type {
+  OpenAQLocation,
+  OpenAQMeasurement,
+  Rollup,
+} from "@/lib/types";
 
 type DetailsPanelProps = {
   isLoading: boolean;
@@ -40,6 +45,7 @@ type DetailsPanelProps = {
   measurementsLoading: boolean;
 };
 
+
 export function DetailsPanel({
   isLoading,
   activeSelectedLocation,
@@ -58,6 +64,11 @@ export function DetailsPanel({
   measurements,
   measurementsLoading,
 }: DetailsPanelProps) {
+  const sparklineQuery = useSparklineMeasurementsQuery(
+    activeSelectedLocation?.id ?? null,
+  );
+  const sparklineMeasurements = sparklineQuery.data?.measurements ?? [];
+
   const latestSnapshotDate = useMemo(() => {
     if (!snapshot?.readings?.length) return null;
     return snapshot.readings.reduce(
@@ -73,7 +84,7 @@ export function DetailsPanel({
   return (
     <div className="space-y-4">
       {/* Station info card */}
-      <Card className="border-border/50 bg-card/80 backdrop-blur">
+      <Card>
         <CardContent className="p-6">
           {isLoading ? (
             <div className="space-y-4">
@@ -210,48 +221,13 @@ export function DetailsPanel({
 
               {/* Right: measurement cards */}
               <div className="flex flex-col gap-3">
-                {snapshot.readings.map((reading) => {
-                  const subIndex = aqiSubIndices?.[reading.parameter];
-                  const cardColor =
-                    subIndex != null ? aqiToColor(subIndex) : null;
-                  return (
-                    <Card
-                      key={reading.parameter}
-                      className="bg-background/50"
-                      style={
-                        cardColor
-                          ? {
-                              borderColor: `${cardColor}40`,
-                              backgroundColor: `${cardColor}26`,
-                            }
-                          : undefined
-                      }
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-1.5">
-                            <Cloud className="h-3.5 w-3.5 text-muted-foreground" />
-                            <p className="text-sm font-medium">
-                              {reading.displayName}
-                            </p>
-                          </div>
-                          <Badge
-                            className="font-mono text-[10px]"
-                            variant="outline"
-                          >
-                            {reading.limit}
-                          </Badge>
-                        </div>
-                        <p className="text-2xl font-semibold tracking-tight font-mono">
-                          {reading.value.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {reading.unit}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {snapshot.readings.map((reading) => (
+                  <ParameterReadingCard
+                    key={reading.parameter}
+                    reading={reading}
+                    measurements={sparklineMeasurements}
+                  />
+                ))}
               </div>
             </div>
           ) : (

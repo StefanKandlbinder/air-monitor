@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { RefObject } from "react";
 import Map, {
   Marker,
-  NavigationControl,
   Popup,
   type MapRef,
 } from "react-map-gl/maplibre";
+import { Compass, LocateFixed, Minus, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
 import type { UserLocation } from "@/components/station-map/types";
 import { AQI_COLORS } from "@/lib/aqi-colors";
@@ -25,6 +26,8 @@ type StationMapCoreProps = {
   locationLatestValues?: Record<number, Record<string, { value: number; units: string }>>;
   userLocation?: UserLocation | null;
   showNavigation?: boolean;
+  isLocating?: boolean;
+  onCenterOnUserLocation?: () => void;
   onSelectLocation: (location: OpenAQLocation) => void;
   onMoveEnd?: (center: MapCenter) => void;
 };
@@ -32,7 +35,7 @@ type StationMapCoreProps = {
 export const DEFAULT_MARKER_COLOR = AQI_COLORS.noData;
 
 export function StationMapCore({
-  mapRef,
+  mapRef: externalMapRef,
   mapStyle,
   initialViewState,
   locations,
@@ -41,97 +44,150 @@ export function StationMapCore({
   locationLatestValues,
   userLocation,
   showNavigation = true,
+  isLocating = false,
+  onCenterOnUserLocation,
   onSelectLocation,
   onMoveEnd,
 }: StationMapCoreProps) {
   const [hoveredLocation, setHoveredLocation] = useState<OpenAQLocation | null>(null);
+  const [bearing, setBearing] = useState(0);
+  const internalRef = useRef<MapRef | null>(null);
+  const activeRef = externalMapRef ?? internalRef;
+
+  const map = () => activeRef.current;
 
   return (
-    <Map
-      ref={mapRef}
-      initialViewState={initialViewState}
-      mapStyle={mapStyle}
-      style={{ width: "100%", height: "100%" }}
-      onLoad={onMoveEnd ? (e) => {
-        const { lng, lat } = e.target.getCenter();
-        const zoom = e.target.getZoom();
-        onMoveEnd({ longitude: lng, latitude: lat, zoom });
-      } : undefined}
-      onMoveEnd={onMoveEnd ? (e) => {
-        const { lng, lat } = e.target.getCenter();
-        const zoom = e.target.getZoom();
-        onMoveEnd({ longitude: lng, latitude: lat, zoom });
-      } : undefined}
-    >
-      {showNavigation ? <NavigationControl position="top-right" /> : null}
+    <div className="relative h-full w-full">
+      <Map
+        ref={activeRef}
+        initialViewState={initialViewState}
+        mapStyle={mapStyle}
+        style={{ width: "100%", height: "100%" }}
+        onLoad={onMoveEnd ? (e) => {
+          const { lng, lat } = e.target.getCenter();
+          onMoveEnd({ longitude: lng, latitude: lat, zoom: e.target.getZoom() });
+        } : undefined}
+        onMoveEnd={onMoveEnd ? (e) => {
+          const { lng, lat } = e.target.getCenter();
+          onMoveEnd({ longitude: lng, latitude: lat, zoom: e.target.getZoom() });
+        } : undefined}
+        onRotate={(e) => setBearing(e.target.getBearing())}
+      >
+        {userLocation ? (
+          <Marker
+            longitude={userLocation.longitude}
+            latitude={userLocation.latitude}
+            anchor="bottom"
+          >
+            <div
+              className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]"
+              aria-label="Your current location"
+            />
+          </Marker>
+        ) : null}
 
-      {userLocation ? (
-        <Marker
-          longitude={userLocation.longitude}
-          latitude={userLocation.latitude}
-          anchor="bottom"
-        >
-          <div
-            className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]"
-            aria-label="Your current location"
-          />
-        </Marker>
-      ) : null}
+        {locations.map((location) => (
+          <Marker
+            key={location.id}
+            longitude={location.coordinates.longitude}
+            latitude={location.coordinates.latitude}
+            anchor="bottom"
+          >
+            <button
+              className="h-4 w-4 rounded-full border-2 border-white transition hover:scale-110"
+              style={{
+                backgroundColor: locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
+                boxShadow: `0 0 0 6px ${(locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR)}40`,
+              }}
+              onClick={() => onSelectLocation(location)}
+              onMouseEnter={() => setHoveredLocation(location)}
+              onMouseLeave={() =>
+                setHoveredLocation((current) =>
+                  current?.id === location.id ? null : current
+                )
+              }
+              onFocus={() => setHoveredLocation(location)}
+              onBlur={() =>
+                setHoveredLocation((current) =>
+                  current?.id === location.id ? null : current
+                )
+              }
+              type="button"
+              aria-label={`Open ${location.name}`}
+            />
+          </Marker>
+        ))}
 
-      {locations.map((location) => (
-        <Marker
-          key={location.id}
-          longitude={location.coordinates.longitude}
-          latitude={location.coordinates.latitude}
-          anchor="bottom"
-        >
-          <button
-            className="h-4 w-4 rounded-full border-2 border-white transition hover:scale-110"
+        {hoveredLocation ? (
+          <Popup
+            longitude={hoveredLocation.coordinates.longitude}
+            latitude={hoveredLocation.coordinates.latitude}
+            anchor="top"
+            closeOnClick={false}
+            closeButton={false}
             style={{
-              backgroundColor: locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
-              boxShadow: `0 0 0 6px ${(locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR)}40`,
+              maxWidth: "none",
+              padding: 0,
+              border: "none",
+              backgroundColor: "transparent",
             }}
-            onClick={() => onSelectLocation(location)}
-            onMouseEnter={() => setHoveredLocation(location)}
-            onMouseLeave={() =>
-              setHoveredLocation((current) =>
-                current?.id === location.id ? null : current
-              )
-            }
-            onFocus={() => setHoveredLocation(location)}
-            onBlur={() =>
-              setHoveredLocation((current) =>
-                current?.id === location.id ? null : current
-              )
-            }
-            type="button"
-            aria-label={`Open ${location.name}`}
-          />
-        </Marker>
-      ))}
+          >
+            <HoverPopupCard
+              location={hoveredLocation}
+              aqiValue={locationAqiValues?.[hoveredLocation.id]}
+              aqiColor={locationColors?.[hoveredLocation.id]}
+              latestValues={locationLatestValues?.[hoveredLocation.id]}
+            />
+          </Popup>
+        ) : null}
+      </Map>
 
-      {hoveredLocation ? (
-        <Popup
-          longitude={hoveredLocation.coordinates.longitude}
-          latitude={hoveredLocation.coordinates.latitude}
-          anchor="top"
-          closeOnClick={false}
-          closeButton={false}
-          style={{
-            maxWidth: "none",
-            padding: 0,
-            border: "none",
-            backgroundColor: "transparent",
-          }}
-        >
-          <HoverPopupCard
-            location={hoveredLocation}
-            aqiValue={locationAqiValues?.[hoveredLocation.id]}
-            aqiColor={locationColors?.[hoveredLocation.id]}
-            latestValues={locationLatestValues?.[hoveredLocation.id]}
-          />
-        </Popup>
+      {showNavigation ? (
+        <div className="absolute right-3 top-3 flex flex-col gap-1">
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 shadow-md"
+            onClick={() => map()?.zoomIn()}
+            aria-label="Zoom in"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 shadow-md"
+            onClick={() => map()?.zoomOut()}
+            aria-label="Zoom out"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 shadow-md"
+            onClick={() => map()?.resetNorth({ duration: 300 })}
+            aria-label="Reset north"
+          >
+            <Compass
+              className="h-4 w-4 transition-transform"
+              style={{ transform: `rotate(${-bearing}deg)` }}
+            />
+          </Button>
+          {onCenterOnUserLocation ? (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 shadow-md"
+              onClick={onCenterOnUserLocation}
+              disabled={isLocating}
+              aria-label="My location"
+            >
+              <LocateFixed className="h-4 w-4" />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
-    </Map>
+    </div>
   );
 }

@@ -283,7 +283,6 @@ export default function StationMap() {
       groupedParameters={groupedParameters}
       isLocating={isLocating}
       userLocation={userLocation}
-      isLoadingStations={isLoadingStations}
       selectedLabel={searchLabel}
       onToggleParameter={toggleParameterFilter}
       onClearParameters={() => setSelectedParameters([])}

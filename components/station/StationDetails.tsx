@@ -55,16 +55,15 @@ export default function StationDetails() {
 
   const queryClient = useQueryClient();
 
-  const cachedAqi = useMemo(() => {
-    type Entry = { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
-    for (const q of queryClient.getQueryCache().findAll({ queryKey: ["aqi"] })) {
-      const d = q.state.data as Entry | undefined;
-      if (d?.colors?.[locationId] !== undefined) {
-        return { color: d.colors[locationId], aqiValue: d.aqiValues?.[locationId] ?? null, latestValues: d.latestValues?.[locationId] ?? {}, subIndices: d.subIndices?.[locationId] ?? {} };
-      }
+  type AqiCacheEntry = { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
+  let cachedAqi: { color: string; aqiValue: number | null; latestValues: Record<string, { value: number; units: string }>; subIndices: Record<string, number> } | null = null;
+  for (const q of queryClient.getQueryCache().findAll({ queryKey: ["aqi"] })) {
+    const d = q.state.data as AqiCacheEntry | undefined;
+    if (d?.colors?.[locationId] !== undefined) {
+      cachedAqi = { color: d.colors[locationId], aqiValue: d.aqiValues?.[locationId] ?? null, latestValues: d.latestValues?.[locationId] ?? {}, subIndices: d.subIndices?.[locationId] ?? {} };
+      break;
     }
-    return null;
-  }, [queryClient, locationId]);
+  }
 
   const aqiSensors = useMemo(
     () => (location ? getAqiSensors(location.sensors) : []),

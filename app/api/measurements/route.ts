@@ -83,7 +83,7 @@ export async function GET(request: Request) {
         const parameter = normalizeParam(sensor.parameter.name.toLowerCase());
 
         return data.results
-          .filter((r) => r.value !== null && r.period?.datetimeFrom?.utc)
+          .filter((r) => r.value !== null && r.value >= 0 && r.period?.datetimeFrom?.utc)
           .map(
             (result): OpenAQMeasurement => ({
               sensorId: sensor.id,

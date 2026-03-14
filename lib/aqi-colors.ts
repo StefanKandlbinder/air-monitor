@@ -1,3 +1,9 @@
+export const PARAM_COLORS: Record<string, string> = {
+  no2: "var(--color-cyan-500)",
+  pm10: "var(--color-orange-500)",
+  pm25: "var(--color-purple-500)",
+};
+
 export const AQI_COLORS = {
   good: "#00e400",
   moderate: "#ffff00",

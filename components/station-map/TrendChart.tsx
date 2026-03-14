@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PARAM_COLORS } from "@/lib/aqi-colors";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
@@ -69,6 +70,12 @@ export function TrendChart({
       )
       .values()
   ).sort((a, b) => a.timestamp - b.timestamp);
+
+  const hasData = {
+    no2: trendData.some((d) => d.no2 != null),
+    pm10: trendData.some((d) => d.pm10 != null),
+    pm25: trendData.some((d) => d.pm25 != null),
+  };
 
   const selectedFromTimestamp = dateFrom ? dayjs(dateFrom).valueOf() : Number.NaN;
   const selectedToTimestamp = dateTo ? dayjs(dateTo).valueOf() : Number.NaN;
@@ -178,39 +185,45 @@ export function TrendChart({
               cursor: "pointer",
             }}
           />
-          {!hiddenSeries.no2 ? (
+          {hasData.no2 && !hiddenSeries.no2 ? (
             <ReferenceLine y={30} stroke="#06b6d4" strokeDasharray="5 5" />
           ) : null}
-          {!hiddenSeries.pm10 ? (
+          {hasData.pm10 && !hiddenSeries.pm10 ? (
             <ReferenceLine y={50} stroke="#f97316" strokeDasharray="5 5" />
           ) : null}
-          {!hiddenSeries.pm25 ? (
+          {hasData.pm25 && !hiddenSeries.pm25 ? (
             <ReferenceLine y={25} stroke="#a855f7" strokeDasharray="5 5" />
           ) : null}
-          <Line
-            type="monotone"
-            dataKey="no2"
-            stroke="#06b6d4"
-            dot={false}
-            name="NO2 (30)"
-            hide={!!hiddenSeries.no2}
-          />
-          <Line
-            type="monotone"
-            dataKey="pm10"
-            stroke="#f97316"
-            dot={false}
-            name="PM10 (50)"
-            hide={!!hiddenSeries.pm10}
-          />
-          <Line
-            type="monotone"
-            dataKey="pm25"
-            stroke="#a855f7"
-            dot={false}
-            name="PM2.5 (25)"
-            hide={!!hiddenSeries.pm25}
-          />
+          {hasData.no2 ? (
+            <Line
+              type="monotone"
+              dataKey="no2"
+              stroke={PARAM_COLORS.no2}
+              dot={false}
+              name="NO2 (30)"
+              hide={!!hiddenSeries.no2}
+            />
+          ) : null}
+          {hasData.pm10 ? (
+            <Line
+              type="monotone"
+              dataKey="pm10"
+              stroke={PARAM_COLORS.pm10}
+              dot={false}
+              name="PM10 (50)"
+              hide={!!hiddenSeries.pm10}
+            />
+          ) : null}
+          {hasData.pm25 ? (
+            <Line
+              type="monotone"
+              dataKey="pm25"
+              stroke={PARAM_COLORS.pm25}
+              dot={false}
+              name="PM2.5 (25)"
+              hide={!!hiddenSeries.pm25}
+            />
+          ) : null}
         </LineChart>
       </ResponsiveContainer>
     </div>
