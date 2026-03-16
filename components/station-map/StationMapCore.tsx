@@ -105,10 +105,10 @@ export function StationMapCore({
             latitude={userLocation.latitude}
             anchor="bottom"
           >
-            <div
-              className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]"
-              aria-label={dict.map.yourCurrentLocation}
-            />
+            <div className="relative flex items-center justify-center" aria-label={dict.map.yourCurrentLocation}>
+              <div className="absolute h-4 w-4 rounded-full bg-emerald-500 opacity-75 animate-ping" />
+              <div className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]" />
+            </div>
           </Marker>
         ) : null}
 
