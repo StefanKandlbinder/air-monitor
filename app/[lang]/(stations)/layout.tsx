@@ -19,7 +19,7 @@ export default async function StationsLayout({ children, params }: Props) {
       <header className="sticky top-0 z-50 h-14 border-b bg-background/95 backdrop-blur justify-between">
         <div className="flex h-full w-full items-center justify-between px-6">
           <Link href={`/${lang}`} className="flex items-center gap-2">
-            <h1 className="text-heading font-semibold tracking-tight text-xl">
+            <h1 className="text-heading font-semibold tracking-tight text-xl bg-linear-to-r from-[#39b54a] via-[#f2c318] to-[#e53935] bg-clip-text text-transparent">
               {dict.nav.title}
             </h1>
             <Image
