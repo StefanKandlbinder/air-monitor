@@ -22,7 +22,10 @@ export async function generateMetadata({
   if (!hasLocale(lang)) return {};
   const dict = await getDictionary(lang);
   const { title, titleTemplate, description, keywords } = dict.metadata;
+  const domain = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  const siteUrl = domain ? `https://${domain}` : "http://localhost:3000";
   return {
+    metadataBase: new URL(siteUrl),
     title: {
       default: title,
       template: titleTemplate,
@@ -41,9 +44,11 @@ export async function generateMetadata({
       description,
     },
     alternates: {
+      canonical: `/${lang}`,
       languages: {
-        de: "/de",
-        en: "/en",
+        "de": "/de",
+        "en": "/en",
+        "x-default": "/de",
       },
     },
     icons: {
