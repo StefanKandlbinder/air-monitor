@@ -12,7 +12,7 @@ import { MapCard } from "@/components/station-map/MapCard";
 import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
 import type { PlaceSelection } from "@/components/station-map/LocationSearch";
 import type { UserLocation } from "@/components/station-map/types";
-import { getAqiSensorParams, toAqiLocationInputs } from "@/lib/aqi";
+import { toAqiLocationInputs } from "@/lib/aqi";
 import type { AqiResult } from "@/lib/server/map-data";
 import { WEEK_MS } from "@/lib/time";
 import type { OpenAQLocation } from "@/lib/types";
@@ -39,7 +39,6 @@ export default function StationMap() {
     if (typeof window === "undefined") return null;
     return new URLSearchParams(window.location.search).get("label");
   });
-  const [isLoadingStations, setIsLoadingStations] = useState(false);
 
   const queryClient = useQueryClient();
   const locationsQuery = useLocationsQuery();
@@ -136,7 +135,6 @@ export default function StationMap() {
   });
 
   const loadStationsAt = useCallback(async (lat: number | string, lng: number | string): Promise<OpenAQLocation[] | null> => {
-    setIsLoadingStations(true);
     try {
       const res = await fetch(`/api/search?lat=${lat}&lon=${lng}`);
       if (!res.ok) {
@@ -153,10 +151,8 @@ export default function StationMap() {
         description: err instanceof Error ? err.message : undefined,
       });
       return null;
-    } finally {
-      setIsLoadingStations(false);
     }
-  }, [queryClient]);
+  }, [dict.toast.couldNotLoadStations, queryClient]);
 
   const fetchStationsAt = useCallback((lat: string, lng: string) => {
     void loadStationsAt(lat, lng);
@@ -237,28 +233,44 @@ export default function StationMap() {
     }
 
     setIsLocating(true);
+
+    const onSuccess = (position: GeolocationPosition) => {
+      const nextLocation: UserLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+      setUserLocation(nextLocation);
+      setSearchLabel(null);
+      pushLocation({ ...nextLocation, zoom: 12 });
+      mapRef.current?.flyTo({
+        center: [nextLocation.longitude, nextLocation.latitude],
+        zoom: 12,
+        duration: 1200,
+      });
+      void loadStationsAt(nextLocation.latitude, nextLocation.longitude);
+      setIsLocating(false);
+    };
+
+    const onError = (error: GeolocationPositionError) => {
+      toast.error(dict.toast.couldNotDetermineLocation, {
+        description: error.message || dict.toast.locationLookupFailed,
+      });
+      setIsLocating(false);
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const nextLocation: UserLocation = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-        setUserLocation(nextLocation);
-        setSearchLabel(null);
-        pushLocation({ ...nextLocation, zoom: 12 });
-        mapRef.current?.flyTo({
-          center: [nextLocation.longitude, nextLocation.latitude],
-          zoom: 12,
-          duration: 1200,
-        });
-        void loadStationsAt(nextLocation.latitude, nextLocation.longitude);
-        setIsLocating(false);
-      },
+      onSuccess,
       (error) => {
-        toast.error(dict.toast.couldNotDetermineLocation, {
-          description: error.message || dict.toast.locationLookupFailed,
-        });
-        setIsLocating(false);
+        // POSITION_UNAVAILABLE (kCLErrorLocationUnknown) — retry once with low accuracy (WiFi/cell)
+        if (error.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+            enableHighAccuracy: false,
+            timeout: 10_000,
+            maximumAge: 60_000,
+          });
+        } else {
+          onError(error);
+        }
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
     );
