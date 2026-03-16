@@ -251,6 +251,7 @@ export default function StationMap() {
           zoom: 12,
           duration: 1200,
         });
+        void loadStationsAt(nextLocation.latitude, nextLocation.longitude);
         setIsLocating(false);
       },
       (error) => {
