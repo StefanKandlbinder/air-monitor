@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { MapRef } from "react-map-gl/maplibre";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -12,7 +12,9 @@ import { MapCard } from "@/components/station-map/MapCard";
 import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
 import type { PlaceSelection } from "@/components/station-map/LocationSearch";
 import type { UserLocation } from "@/components/station-map/types";
-import { getAqiSensorParams } from "@/lib/aqi";
+import { getAqiSensorParams, toAqiLocationInputs } from "@/lib/aqi";
+import type { AqiResult } from "@/lib/server/map-data";
+import { WEEK_MS } from "@/lib/time";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -39,12 +41,17 @@ export default function StationMap() {
   });
   const [isLoadingStations, setIsLoadingStations] = useState(false);
 
+  const queryClient = useQueryClient();
   const locationsQuery = useLocationsQuery();
 
-  const locations = useMemo(
-    () => searchLocations ?? locationsQuery.data ?? [],
-    [searchLocations, locationsQuery.data]
-  );
+  const locations = useMemo(() => {
+    const all = searchLocations ?? locationsQuery.data ?? [];
+    const now = Date.now();
+    return all.filter((l) => {
+      const last = l.datetimeLast?.utc;
+      return last && now - new Date(last).getTime() <= WEEK_MS;
+    });
+  }, [searchLocations, locationsQuery.data]);
 
   const availableParameters = useMemo(() => {
     const parameters = new Set<string>();
@@ -61,18 +68,12 @@ export default function StationMap() {
     [availableParameters]
   );
 
-  const aqiLocations = useMemo(
-    () =>
-      locations
-        .map((l) => ({ locationId: l.id, sensorParams: getAqiSensorParams(l.sensors) }))
-        .filter((l) => Object.keys(l.sensorParams).length > 0),
-    [locations]
-  );
+  const aqiLocations = useMemo(() => toAqiLocationInputs(locations), [locations]);
 
   const aqiQuery = useQuery({
-    queryKey: ["aqi", aqiLocations],
+    queryKey: ["aqi", aqiLocations.map((l) => l.locationId).sort((a, b) => a - b)],
     enabled: aqiLocations.length > 0,
-    staleTime: 1000 * 60 * 60,
+    staleTime: Infinity,
     queryFn: async () => {
       const res = await fetch("/api/aqi", {
         method: "POST",
@@ -142,7 +143,9 @@ export default function StationMap() {
         const body = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(body.error ?? `Server error ${res.status}`);
       }
-      const data = (await res.json()) as { locations: OpenAQLocation[] };
+      const data = (await res.json()) as { locations: OpenAQLocation[]; aqi: AqiResult };
+      const locationIds = toAqiLocationInputs(data.locations).map((l) => l.locationId).sort((a, b) => a - b);
+      queryClient.setQueryData(["aqi", locationIds], data.aqi);
       setSearchLocations(data.locations);
       return data.locations;
     } catch (err) {
@@ -153,7 +156,7 @@ export default function StationMap() {
     } finally {
       setIsLoadingStations(false);
     }
-  }, []);
+  }, [queryClient]);
 
   const fetchStationsAt = useCallback((lat: string, lng: string) => {
     void loadStationsAt(lat, lng);

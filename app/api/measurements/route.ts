@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
 import { openaqErrorResponse, statusToErrorCode } from "@/lib/openaq-errors";
 import { AQI_PARAMS, normalizeParam } from "@/lib/aqi";
+import { withConcurrency } from "@/lib/concurrency";
 import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -82,8 +83,8 @@ export async function GET(request: Request) {
 
     const endpoint = rollup === "hours" ? "hours" : "days";
 
-    const sensorResults = await Promise.allSettled(
-      airQualitySensors.map(async (sensor) => {
+    const sensorResults = await withConcurrency(
+      airQualitySensors.map((sensor) => async () => {
         const data = await openaqGet<SensorDataResponse>(
           `/v3/sensors/${sensor.id}/${endpoint}`,
           query,
@@ -104,7 +105,8 @@ export async function GET(request: Request) {
               timestamp: new Date(result.period!.datetimeFrom!.utc).getTime(),
             })
           );
-      })
+      }),
+      3
     );
 
     const rateLimitedResult = sensorResults.find(

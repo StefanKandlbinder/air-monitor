@@ -158,7 +158,7 @@ export function TrendChart({
 
   return (
     <div className="h-48 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <LineChart data={trendData}>
           <XAxis
             dataKey="timestamp"

@@ -73,14 +73,27 @@ export function getAqiSensors(
     }));
 }
 
+export type SensorMeta = { param: string; units: string };
+
+export type LocationInput = {
+  locationId: number;
+  sensorParams: Record<number, SensorMeta>;
+};
+
 export function getAqiSensorParams(
   sensors: OpenAQLocation["sensors"]
-): Record<number, { param: string; units: string }> {
+): Record<number, SensorMeta> {
   return Object.fromEntries(
     sensors
       .filter((s) => AQI_PARAMS.has(s.parameter.name.toLowerCase()))
       .map((s) => [s.id, { param: normalizeParam(s.parameter.name), units: s.parameter.units }])
   );
+}
+
+export function toAqiLocationInputs(locations: OpenAQLocation[]): LocationInput[] {
+  return locations
+    .map((l) => ({ locationId: l.id, sensorParams: getAqiSensorParams(l.sensors) }))
+    .filter((l) => Object.keys(l.sensorParams).length > 0);
 }
 
 export type LocationAqi = {

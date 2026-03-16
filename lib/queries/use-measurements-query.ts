@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import type { MeasurementsResponse, Rollup } from "@/lib/types";
+import { floorToHourIso, HOUR_MS } from "@/lib/time";
 import { assertResponseOk } from "@/lib/fetch-error";
 
 type DateRange = {
@@ -56,7 +56,7 @@ export function useSparklineMeasurementsQuery(locationId: number | null) {
     staleTime: 1000 * 60 * 60,
     queryFn: () => {
       if (!locationId) throw new Error("Missing locationId");
-      return fetchMeasurements(locationId, "hours", dayjs().subtract(7, "day").toISOString());
+      return fetchMeasurements(locationId, "hours", floorToHourIso(Date.now() - 7 * 24 * HOUR_MS));
     },
   });
 }
