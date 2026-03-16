@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
@@ -21,6 +22,13 @@ export default async function StationsLayout({ children, params }: Props) {
             <h1 className="text-heading font-semibold tracking-tight text-xl">
               {dict.nav.title}
             </h1>
+            <Image
+              src="/icons/icon-mark.svg"
+              alt=""
+              width={40}
+              height={26.66}
+              priority
+            />
           </Link>
           <ThemeToggle />
         </div>
