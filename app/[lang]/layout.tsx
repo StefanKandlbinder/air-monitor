@@ -46,6 +46,9 @@ export async function generateMetadata({
         en: "/en",
       },
     },
+    icons: {
+      apple: "/icons/icon-192x192.png",
+    },
   };
 }
 
@@ -60,6 +63,10 @@ export default async function LangLayout({ children, params }: Props) {
 
   return (
     <html lang={lang} suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#262626" media="(prefers-color-scheme: dark)" />
+      </head>
       <body>
         <ThemeProvider>
           <DictionaryProvider dict={dict}>
