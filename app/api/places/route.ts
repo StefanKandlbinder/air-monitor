@@ -6,6 +6,7 @@ export type { NominatimResult };
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
+  const lang = searchParams.get("lang") ?? "de";
 
   if (!q || q.trim().length < 2) {
     return NextResponse.json({ results: [] });
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
 
     const res = await fetch(url.toString(), {
       headers: {
-        "Accept-Language": "en",
+        "Accept-Language": lang,
         "User-Agent": "linzair/1.0",
       },
       next: { revalidate: 300 },

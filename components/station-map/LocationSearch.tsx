@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
 import {
   InputGroup,
@@ -51,6 +52,7 @@ export function LocationSearch({
   onClearParameters,
 }: LocationSearchProps) {
   const dict = useDictionary();
+  const { lang } = useParams<{ lang?: string }>();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -68,7 +70,7 @@ export function LocationSearch({
 
   const isQueryActive = query.trim().length >= 2;
   const { data: results = [], isFetching } =
-    usePlaceSearchQuery(debouncedQuery);
+    usePlaceSearchQuery(debouncedQuery, lang ?? "de");
 
   const handleSelect = useCallback(
     (result: NominatimResult) => {
