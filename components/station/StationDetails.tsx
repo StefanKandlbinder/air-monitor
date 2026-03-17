@@ -142,6 +142,7 @@ export default function StationDetails() {
     [mapCacheEntry?.allColors, aqiData?.color, locationId]
   );
 
+
   const isLoading =
     locationsQuery.isPending ||
     singleLocationQuery.isFetching ||

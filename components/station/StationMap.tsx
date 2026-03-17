@@ -142,8 +142,14 @@ export default function StationMap() {
         throw new Error(body.error ?? `Server error ${res.status}`);
       }
       const data = (await res.json()) as { locations: OpenAQLocation[]; aqi: AqiResult };
-      const locationIds = toAqiLocationInputs(data.locations).map((l) => l.locationId).sort((a, b) => a - b);
+      const now = Date.now();
+      const recentLocations = data.locations.filter((l) => {
+        const last = l.datetimeLast?.utc;
+        return last && now - new Date(last).getTime() <= WEEK_MS;
+      });
+      const locationIds = toAqiLocationInputs(recentLocations).map((l) => l.locationId).sort((a, b) => a - b);
       queryClient.setQueryData(["aqi", locationIds], data.aqi);
+      queryClient.setQueryData(["locations"], data.locations);
       setSearchLocations(data.locations);
       return data.locations;
     } catch (err) {
