@@ -98,7 +98,7 @@ export function LocationSearch({
       onOpenChange={setSearchOpen}
     >
       <PopoverAnchor asChild>
-        <InputGroup className="h-8 w-64">
+        <InputGroup>
           <InputGroupAddon align="inline-start">
             <Search />
           </InputGroupAddon>
@@ -153,7 +153,7 @@ export function LocationSearch({
         </InputGroup>
       </PopoverAnchor>
       <PopoverContent
-        className="w-80 p-0"
+        className="px-1 py-0 mt-1"
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >

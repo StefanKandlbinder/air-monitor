@@ -105,7 +105,10 @@ export function StationMapCore({
             latitude={userLocation.latitude}
             anchor="bottom"
           >
-            <div className="relative flex items-center justify-center" aria-label={dict.map.yourCurrentLocation}>
+            <div
+              className="relative flex items-center justify-center"
+              aria-label={dict.map.yourCurrentLocation}
+            >
               <div className="absolute h-4 w-4 rounded-full bg-emerald-500 opacity-75 animate-ping" />
               <div className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_0_6px_rgba(16,185,129,0.25)]" />
             </div>
@@ -152,7 +155,8 @@ export function StationMapCore({
               <div
                 className="h-5 w-5 rounded-full border-2 border-white"
                 style={{
-                  backgroundColor: locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
+                  backgroundColor:
+                    locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR,
                   boxShadow: `0 0 0 6px ${locationColors?.[location.id] ?? DEFAULT_MARKER_COLOR}40`,
                 }}
               />
@@ -204,11 +208,10 @@ export function StationMapCore({
       </Map>
 
       {showNavigation ? (
-        <div className="fixed left-4 bottom-4 flex flex-col gap-1">
+        <div className="fixed left-4 bottom-4 flex gap-1">
           <Button
             variant="secondary"
             size="icon"
-            className="h-8 w-8 shadow-md"
             onClick={() => map()?.zoomIn()}
             aria-label={dict.map.zoomIn}
           >
@@ -217,7 +220,6 @@ export function StationMapCore({
           <Button
             variant="secondary"
             size="icon"
-            className="h-8 w-8 shadow-md"
             onClick={() => map()?.zoomOut()}
             aria-label={dict.map.zoomOut}
           >
@@ -226,7 +228,7 @@ export function StationMapCore({
           <Button
             variant="secondary"
             size="icon"
-            className="h-8 w-8 shadow-md"
+            className="ml-2"
             onClick={() => map()?.resetNorth({ duration: 300 })}
             aria-label={dict.map.resetNorth}
           >
@@ -239,7 +241,6 @@ export function StationMapCore({
             <Button
               variant="secondary"
               size="icon"
-              className="h-8 w-8 shadow-md"
               onClick={onCenterOnUserLocation}
               disabled={isLocating}
               aria-label={dict.map.myLocation}
