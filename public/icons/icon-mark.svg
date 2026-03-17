@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="100 -10 400 300">
   <defs>
-    <linearGradient id="gauge-gradient" gradientUnits="userSpaceOnUse" x1="140" y1="0" x2="460" y2="0">
+    <linearGradient id="a" x1="140" x2="460" y1="0" y2="0" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#39b54a"/>
       <stop offset="50%" stop-color="#f2c318"/>
       <stop offset="100%" stop-color="#e53935"/>
     </linearGradient>
-    <linearGradient id="needle-gradient" gradientUnits="userSpaceOnUse" x1="300" y1="220" x2="377" y2="128">
+    <linearGradient id="b" x1="300" x2="377" y1="220" y2="128" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#39b54a"/>
       <stop offset="50%" stop-color="#f2c318"/>
       <stop offset="100%" stop-color="#e53935"/>
     </linearGradient>
   </defs>
-  <g fill="none" stroke="url(#gauge-gradient)" stroke-width="40">
+  <g fill="none" stroke="url(#a)" stroke-width="40">
     <path d="M140 220a160 160 0 0 1 80-140"/>
     <path d="M220 80a160 160 0 0 1 160 0"/>
     <path d="M380 80a160 160 0 0 1 80 140"/>
   </g>
-  <path fill="url(#needle-gradient)" d="M377.14 128.08 L311.49 229.65 288.51 210.36 Z"/>
-  <circle cx="300" cy="220" r="22" fill="url(#needle-gradient)"/>
+  <path fill="url(#b)" d="m377.14 128.08-65.65 101.57-22.98-19.29Z"/>
+  <circle cx="300" cy="220" r="22" fill="url(#b)"/>
 </svg>
