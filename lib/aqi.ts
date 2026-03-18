@@ -12,6 +12,12 @@ export const PARAM_LABELS: Record<string, string> = {
   pm25: "PM2.5", pm10: "PM10", o3: "O3", co: "CO", so2: "SO2", no2: "NO2",
 };
 
+/** Parameters shown in the hover popup and detail panel readings. */
+export const DISPLAY_PARAMS = ["no2", "pm10", "pm25"] as const;
+
+/** EU/WHO limit values (µg/m³) used for progress bars in detail views. */
+export const PARAMETER_LIMITS: Record<string, number> = { no2: 30, pm10: 50, pm25: 25 };
+
 // EPA AQI breakpoints: [C_low, C_high, I_low, I_high]
 const BP_PM25  = [[0,12,0,50],[12.1,35.4,51,100],[35.5,55.4,101,150],[55.5,150.4,151,200],[150.5,250.4,201,300],[250.5,350.4,301,400],[350.5,500.4,401,500]];
 const BP_PM10  = [[0,54,0,50],[55,154,51,100],[155,254,101,150],[255,354,151,200],[355,424,201,300],[425,504,301,400],[505,604,401,500]];

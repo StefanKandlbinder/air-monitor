@@ -16,9 +16,7 @@ import {
 } from "@/components/ui/card";
 import type { OpenAQLocation } from "@/lib/types";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
-
-const DISPLAY_PARAMS = ["no2", "pm10", "pm25"] as const;
-const PARAM_LABEL: Record<string, string> = { no2: "NO₂", pm10: "PM10", pm25: "PM2.5" };
+import { DISPLAY_PARAMS, PARAM_LABELS } from "@/lib/aqi";
 
 type HoverPopupCardProps = {
   location: OpenAQLocation;
@@ -46,12 +44,12 @@ export function HoverPopupCard({ location, aqiValue, aqiColor, latestValues, onG
   const readings = DISPLAY_PARAMS.map((param) => {
     // Prefer API-fetched latest values; fall back to sensor.latestValue if present
     const apiData = latestValues?.[param];
-    if (apiData) return { param, label: PARAM_LABEL[param], value: apiData.value, units: apiData.units };
+    if (apiData) return { param, label: PARAM_LABELS[param], value: apiData.value, units: apiData.units };
     const sensor = location.sensors.find(
       (s) => s.parameter.name.toLowerCase() === param && s.latestValue != null
     );
     return sensor
-      ? { param, label: PARAM_LABEL[param], value: sensor.latestValue as number, units: sensor.parameter.units }
+      ? { param, label: PARAM_LABELS[param], value: sensor.latestValue as number, units: sensor.parameter.units }
       : null;
   }).filter(Boolean) as { param: string; label: string; value: number; units: string }[];
 

@@ -2,23 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
+import { assertResponseOk } from "@/lib/fetch-error";
+import { useAqiCacheEntry } from "@/lib/hooks/use-aqi-cache-entry";
 import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
-import { getAqiSensorParams, PARAM_LABELS } from "@/lib/aqi";
+import { getAqiSensorParams, PARAM_LABELS, PARAMETER_LIMITS } from "@/lib/aqi";
 import { HOUR_MS, floorToHourIso } from "@/lib/time";
 import type { AirQualityReading, Rollup } from "@/lib/types";
 
-const PARAMETER_LIMITS: Record<string, number> = { no2: 30, pm10: 50, pm25: 25 };
-
-type AqiCacheEntry = {
-  colors: Record<number, string>;
-  aqiValues: Record<number, number>;
-  latestValues: Record<number, Record<string, { value: number; units: string }>>;
-  subIndices?: Record<number, Record<string, number>>;
-};
 
 type AqiResult = {
   color: string;
@@ -68,22 +62,7 @@ export default function StationDetails() {
 
   const location = locationFromCache ?? singleLocationQuery.data ?? null;
 
-  const queryClient = useQueryClient();
-
-  const mapCacheEntry = useMemo(() => {
-    const match = queryClient
-      .getQueriesData<AqiCacheEntry>({ queryKey: ["aqi"] })
-      .find(([, d]) => d?.colors?.[locationId] !== undefined);
-    if (!match) return null;
-    const [queryKey, data] = match;
-    const result: AqiResult = {
-      color: data!.colors[locationId],
-      aqiValue: data!.aqiValues?.[locationId] ?? null,
-      latestValues: data!.latestValues?.[locationId] ?? {},
-      subIndices: data!.subIndices?.[locationId] ?? {},
-    };
-    return { result, allColors: data!.colors, updatedAt: queryClient.getQueryState(queryKey)?.dataUpdatedAt };
-  }, [queryClient, locationId]);
+  const mapCacheEntry = useAqiCacheEntry(locationId);
 
   const aqiLocation = useMemo(() => {
     if (!location) return null;
@@ -104,10 +83,7 @@ export default function StationDetails() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locations: [aqiLocation] }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { errorCode?: string };
-        throw new Error(body.errorCode ?? "openaq.unknown");
-      }
+      await assertResponseOk(res);
       const d = (await res.json()) as { colors: Record<number, string>; aqiValues: Record<number, number>; latestValues: Record<number, Record<string, { value: number; units: string }>>; subIndices?: Record<number, Record<string, number>> };
       return { color: d.colors[locationId], aqiValue: d.aqiValues?.[locationId] ?? null, latestValues: d.latestValues?.[locationId] ?? {}, subIndices: d.subIndices?.[locationId] ?? {} };
     },

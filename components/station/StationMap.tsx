@@ -7,16 +7,19 @@ import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
-import { groupParameters, DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
+import { DARK_MAP_STYLE, LIGHT_MAP_STYLE } from "@/components/station-map/constants";
 import { MapCard } from "@/components/station-map/MapCard";
 import { useLocationsQuery } from "@/components/station-map/queries/use-locations-query";
 import type { PlaceSelection } from "@/components/station-map/LocationSearch";
 import type { UserLocation } from "@/components/station-map/types";
 import { toAqiLocationInputs } from "@/lib/aqi";
+import { assertResponseOk } from "@/lib/fetch-error";
 import type { AqiResult } from "@/lib/server/map-data";
 import { WEEK_MS } from "@/lib/time";
 import { useRefetchOnVisible } from "@/lib/hooks/use-refetch-on-visible";
 import { useGeolocation } from "@/lib/hooks/use-geolocation";
+import { useParameterFilter } from "@/lib/hooks/use-parameter-filter";
+import { useMapUrlState } from "@/lib/hooks/use-map-url-state";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -34,12 +37,7 @@ export default function StationMap() {
   const mapRef = useRef<MapRef | null>(null);
   const { resolvedTheme } = useTheme();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
   const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
-  const [searchLabel, setSearchLabel] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("label");
-  });
 
   const queryClient = useQueryClient();
   const locationsQuery = useLocationsQuery();
@@ -58,20 +56,8 @@ export default function StationMap() {
     });
   }, [searchLocations, locationsQuery.data]);
 
-  const availableParameters = useMemo(() => {
-    const parameters = new Set<string>();
-    for (const location of locations) {
-      for (const sensor of location.sensors) {
-        parameters.add(sensor.parameter.name.toLowerCase());
-      }
-    }
-    return Array.from(parameters).sort();
-  }, [locations]);
-
-  const groupedParameters = useMemo(
-    () => groupParameters(availableParameters),
-    [availableParameters]
-  );
+  const { selectedParameters, setSelectedParameters, groupedParameters, filteredLocations, toggleParameter } =
+    useParameterFilter(locations);
 
   const aqiLocations = useMemo(() => toAqiLocationInputs(locations), [locations]);
 
@@ -85,10 +71,7 @@ export default function StationMap() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locations: aqiLocations }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { errorCode?: string };
-        throw new Error(body.errorCode ?? "openaq.unknown");
-      }
+      await assertResponseOk(res);
       return (await res.json()) as {
         colors: Record<number, string>;
         aqiValues: Record<number, number>;
@@ -97,48 +80,25 @@ export default function StationMap() {
     },
   });
 
-  const filteredLocations = useMemo(() => {
-    if (!selectedParameters.length) return locations;
-    return locations.filter((location) =>
-      selectedParameters.every((param) =>
-        location.sensors.some((s) => s.parameter.name.toLowerCase() === param)
-      )
-    );
-  }, [selectedParameters, locations]);
-
   const mapStyle = resolvedTheme === "dark" ? DARK_MAP_STYLE : LIGHT_MAP_STYLE;
 
   const hasFlownToDataRef = useRef(false);
-  const popstateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // On initial load, fly to the centroid of all default stations once.
   useEffect(() => {
-    if (searchLocations) return; // don't override a search fly
+    if (searchLocations) return;
     if (!filteredLocations.length || hasFlownToDataRef.current) return;
     hasFlownToDataRef.current = true;
     const { sumLng, sumLat } = filteredLocations.reduce(
       (acc, l) => ({ sumLng: acc.sumLng + l.coordinates.longitude, sumLat: acc.sumLat + l.coordinates.latitude }),
-      { sumLng: 0, sumLat: 0 }
+      { sumLng: 0, sumLat: 0 },
     );
-    const longitude = sumLng / filteredLocations.length;
-    const latitude = sumLat / filteredLocations.length;
-    mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 9.5, duration: 800 });
+    mapRef.current?.flyTo({
+      center: [sumLng / filteredLocations.length, sumLat / filteredLocations.length],
+      zoom: 9.5,
+      duration: 800,
+    });
   }, [filteredLocations, searchLocations]);
-
-  const [mapCenter] = useState(() => {
-    if (typeof window === "undefined") {
-      return { longitude: 14.2978, latitude: 48.3233, zoom: 12 };
-    }
-    const sp = new URLSearchParams(window.location.search);
-    const lat = sp.get("lat");
-    const lng = sp.get("lng");
-    const zoom = sp.get("zoom");
-    return {
-      longitude: lng ? parseFloat(lng) : 14.2978,
-      latitude: lat ? parseFloat(lat) : 48.3233,
-      zoom: zoom ? parseFloat(zoom) : 12,
-    };
-  });
 
   const loadStationsAt = useCallback(async (lat: number | string, lng: number | string): Promise<OpenAQLocation[] | null> => {
     try {
@@ -170,71 +130,8 @@ export default function StationMap() {
     void loadStationsAt(lat, lng);
   }, [loadStationsAt]);
 
-  // On mount: if URL has lat/lng params, fetch stations at those coordinates
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sp = new URLSearchParams(window.location.search);
-    const lat = sp.get("lat");
-    const lng = sp.get("lng");
-    if (lat && lng) fetchStationsAt(lat, lng);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const buildLocationParams = (center: { longitude: number; latitude: number; zoom: number }, label?: string) => {
-    const params: Record<string, string> = {
-      lat: center.latitude.toFixed(4),
-      lng: center.longitude.toFixed(4),
-      zoom: center.zoom.toFixed(1),
-    };
-    if (label) params.label = label;
-    return new URLSearchParams(params).toString();
-  };
-
-  // Continuous pan/zoom — replace in place, no history entry (preserve current label)
-  const handleMoveEnd = (center: { longitude: number; latitude: number; zoom: number }): void => {
-    window.history.replaceState(null, "", `?${buildLocationParams(center, searchLabel ?? undefined)}`);
-  };
-
-  // Intentional "go to" — push so back button restores previous position
-  const pushLocation = (center: { longitude: number; latitude: number; zoom: number }, label?: string): void => {
-    window.history.pushState(null, "", `?${buildLocationParams(center, label)}`);
-  };
-
-  // Respond to browser back/forward — fly the map and re-fetch stations
-  useEffect(() => {
-    const onPopState = () => {
-      const sp = new URLSearchParams(window.location.search);
-      const lat = sp.get("lat");
-      const lng = sp.get("lng");
-      const zoom = sp.get("zoom");
-      const label = sp.get("label");
-      setSearchLabel(label);
-      if (lat && lng) {
-        if (zoom) {
-          mapRef.current?.flyTo({
-            center: [parseFloat(lng), parseFloat(lat)],
-            zoom: parseFloat(zoom),
-            duration: 600,
-          });
-        }
-        if (popstateDebounceRef.current) clearTimeout(popstateDebounceRef.current);
-        popstateDebounceRef.current = setTimeout(() => fetchStationsAt(lat, lng), 150);
-      }
-    };
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-      if (popstateDebounceRef.current) clearTimeout(popstateDebounceRef.current);
-    };
-  }, [fetchStationsAt]);
-
-  const toggleParameterFilter = (parameter: string): void => {
-    setSelectedParameters((current) =>
-      current.includes(parameter)
-        ? current.filter((item) => item !== parameter)
-        : [...current, parameter]
-    );
-  };
+  const { mapCenter, searchLabel, setSearchLabel, handleMoveEnd, pushLocation } =
+    useMapUrlState(mapRef, fetchStationsAt);
 
   const { locate, isLocating, isSupported: isGeolocationSupported } = useGeolocation(
     useCallback(async (coords) => {
@@ -299,7 +196,7 @@ export default function StationMap() {
       isLocating={isLocating}
       userLocation={userLocation}
       selectedLabel={searchLabel}
-      onToggleParameter={toggleParameterFilter}
+      onToggleParameter={toggleParameter}
       onClearParameters={() => setSelectedParameters([])}
       onCenterOnUserLocation={centerOnUserLocation}
       locationColors={aqiQuery.data?.colors}
