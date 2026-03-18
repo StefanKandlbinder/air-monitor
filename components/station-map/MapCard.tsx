@@ -64,8 +64,7 @@ export function MapCard({
 }: MapCardProps) {
   return (
     <div
-      className="relative overflow-hidden"
-      style={{ height: "calc(100dvh - 3.5rem)" }}
+      className="relative overflow-hidden h-full"
     >
       {/* Full-height map */}
       <StationMapCore

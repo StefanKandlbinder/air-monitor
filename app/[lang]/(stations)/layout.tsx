@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import { NavLinks } from "@/components/layout/NavLinks";
+import { OpenAQIcon } from "@/lib/icons/OpenAQIcon";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
 import { notFound } from "next/navigation";
 
@@ -16,7 +17,10 @@ export default async function StationsLayout({ children, params }: Props) {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div
+      className="grid min-h-dvh"
+      style={{ gridTemplateRows: "auto 1fr auto" }}
+    >
       <header className="sticky top-0 z-50 h-14 border-b bg-background/95 backdrop-blur justify-between">
         <div className="flex h-full w-full items-center px-6 gap-4">
           <Link href={`/${lang}`} className="flex items-center gap-2 grow">
@@ -36,29 +40,35 @@ export default async function StationsLayout({ children, params }: Props) {
         </div>
       </header>
       {children}
-      <footer className="border-t px-6 py-4 flex items-center justify-center gap-3 text-xs text-muted-foreground flex-wrap">
-        <span>© {new Date().getFullYear()} {dict.nav.title}</span>
-        <span className="opacity-30">·</span>
-        <span className="flex items-center gap-1.5">
-          {dict.home.poweredBy}
-          <Link href="https://openaq.org" target="_blank" rel="noopener noreferrer">
-            <Image
-              src="/openaq-logo.svg"
-              alt="OpenAQ"
-              width={48}
-              height={14}
-              className="opacity-50 transition-opacity hover:opacity-90 dark:invert"
-            />
-          </Link>
-        </span>
-        <span className="opacity-30">·</span>
-        <Link href={`/${lang}/impressum`} className="hover:text-foreground transition-colors">
-          {dict.footer.impressum}
-        </Link>
-        <span className="opacity-30">·</span>
-        <Link href={`/${lang}/datenschutz`} className="hover:text-foreground transition-colors">
-          {dict.footer.privacy}
-        </Link>
+      <footer className="border-t text-xs text-muted-foreground overflow-x-auto scrollbar-none">
+        <ul className="flex items-center justify-center gap-3 whitespace-nowrap px-6 py-4 min-w-max mx-auto">
+          <li>© {new Date().getFullYear()} {dict.nav.title}</li>
+          <li className="opacity-30" aria-hidden>·</li>
+          <li className="inline-flex items-center gap-1.5">
+            {dict.home.poweredBy}
+            <Link
+              href="https://openaq.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-50 transition-opacity hover:opacity-90 inline-flex items-center"
+              aria-label="OpenAQ"
+            >
+              <OpenAQIcon className="dark:invert" />
+            </Link>
+          </li>
+          <li className="opacity-30" aria-hidden>·</li>
+          <li>
+            <Link href={`/${lang}/impressum`} className="hover:text-foreground transition-colors">
+              {dict.footer.impressum}
+            </Link>
+          </li>
+          <li className="opacity-30" aria-hidden>·</li>
+          <li>
+            <Link href={`/${lang}/datenschutz`} className="hover:text-foreground transition-colors">
+              {dict.footer.privacy}
+            </Link>
+          </li>
+        </ul>
       </footer>
     </div>
   );
