@@ -48,7 +48,8 @@ export default function StationMap() {
   }, [queryClient]));
 
   const locations = useMemo(() => {
-    const all = searchLocations ?? locationsQuery.data ?? [];
+    if (searchLocations) return searchLocations; // already week-filtered server-side
+    const all = locationsQuery.data ?? [];
     const now = Date.now();
     return all.filter((l) => {
       const last = l.datetimeLast?.utc;
@@ -108,12 +109,7 @@ export default function StationMap() {
         throw new Error(body.error ?? `Server error ${res.status}`);
       }
       const data = (await res.json()) as { locations: OpenAQLocation[]; aqi: AqiResult };
-      const now = Date.now();
-      const recentLocations = data.locations.filter((l) => {
-        const last = l.datetimeLast?.utc;
-        return last && now - new Date(last).getTime() <= WEEK_MS;
-      });
-      const locationIds = toAqiLocationInputs(recentLocations).map((l) => l.locationId).sort((a, b) => a - b);
+      const locationIds = toAqiLocationInputs(data.locations).map((l) => l.locationId).sort((a, b) => a - b);
       queryClient.setQueryData(["aqi", locationIds], data.aqi);
       queryClient.setQueryData(["locations"], data.locations);
       setSearchLocations(data.locations);
