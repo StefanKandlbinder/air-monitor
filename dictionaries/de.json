@@ -112,7 +112,8 @@
     "unknown": "Ein unerwarteter Fehler ist aufgetreten."
   },
   "footer": {
-    "impressum": "Impressum"
+    "impressum": "Impressum",
+    "privacy": "Datenschutz"
   },
   "impressum": {
     "title": "Impressum",
@@ -122,11 +123,50 @@
     "city": "4020 Linz, Österreich",
     "contactHeading": "Kontakt",
     "emailLabel": "E-Mail",
-    "email": "ihre@email.com",
+    "email": "luft-monitor@gmail.com",
     "purposeHeading": "Zweck der Website",
     "purpose": "Diese Website stellt Echtzeit-Luftqualitätsdaten ausschließlich zu Informationszwecken zur Verfügung.",
     "liabilityHeading": "Haftungsausschluss",
-    "liability": "Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links. Für den Inhalt verlinkter Seiten sind ausschließlich deren Betreiber verantwortlich. Alle Daten stammen von OpenAQ und werden ohne Gewähr auf Richtigkeit oder Vollständigkeit bereitgestellt."
+    "liability": "Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links. Für den Inhalt verlinkter Seiten sind ausschließlich deren Betreiber verantwortlich. Alle Daten stammen von OpenAQ und werden ohne Gewähr auf Richtigkeit oder Vollständigkeit bereitgestellt.",
+    "privacyHeading": "Datenschutz",
+    "privacyText": "Informationen zur Verarbeitung personenbezogener Daten finden Sie in unserer",
+    "privacyLink": "Datenschutzerklärung"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "lastUpdated": "Stand: März 2026",
+    "controllerHeading": "Verantwortlicher (Art. 13 DSGVO)",
+    "controllerName": "Ihr Name",
+    "controllerAddress": "Ihre Straße 1",
+    "controllerCity": "4020 Linz, Österreich",
+    "emailLabel": "E-Mail",
+    "controllerEmail": "luft-monitor@gmail.com",
+    "hostingHeading": "Hosting & Serverprotokolle",
+    "hostingText": "Diese Website wird über Vercel Inc., 340 Pine Street, Suite 801, San Francisco, CA 94104, USA, gehostet. Bei jedem Seitenaufruf verarbeitet Vercel technische Zugriffsdaten (IP-Adresse, Zeitstempel, aufgerufene URL, Browser- und Geräteinformationen) in Form von Serverprotokollen. Diese Daten sind zur Bereitstellung und Absicherung des Betriebs technisch erforderlich.",
+    "hostingLegalBasis": "Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und stabilen Betrieb). Die Daten werden nach spätestens 30 Tagen gelöscht.",
+    "analyticsHeading": "Vercel Web Analytics",
+    "analyticsText": "Diese Website verwendet Vercel Web Analytics zur Auswertung von Seitenaufrufen. Dabei werden keine Cookies gesetzt und keine personenbezogenen Daten wie IP-Adressen dauerhaft gespeichert. Vercel erhebt ausschließlich aggregierte, nicht rückverfolgbare Nutzungsstatistiken (aufgerufene Seiten, Herkunftsland, Browsertyp).",
+    "analyticsLegalBasis": "Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Verbesserung des Angebots). Da keine personenbezogenen Daten verarbeitet werden, ist keine Einwilligung erforderlich. Weitere Informationen: vercel.com/docs/analytics/privacy-policy.",
+    "openaqHeading": "Luftqualitätsdaten (OpenAQ)",
+    "openaqText": "Die angezeigten Luftqualitätsdaten stammen von OpenAQ (openaq.org), einer gemeinnützigen Organisation mit Sitz in den USA. Die Datenabfragen erfolgen ausschließlich serverseitig – Ihre IP-Adresse wird dabei nicht an OpenAQ übermittelt. OpenAQ stellt öffentlich zugängliche Messdaten bereit; deren Nutzungsbedingungen finden Sie unter openaq.org/developers.",
+    "thirdCountryHeading": "Drittlandübermittlung",
+    "thirdCountryText": "Vercel Inc. hat seinen Sitz in den USA. Die Übermittlung personenbezogener Daten (Serverprotokolle) in die USA erfolgt auf Grundlage von Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO) sowie des EU-US Data Privacy Framework. Vercel ist unter dem Data Privacy Framework zertifiziert.",
+    "retentionHeading": "Speicherdauer",
+    "retentionText": "Serverprotokolle werden bei Vercel nach spätestens 30 Tagen automatisch gelöscht. Vercel Analytics speichert ausschließlich aggregierte, nicht personenbezogene Statistiken ohne definierte Löschfrist.",
+    "rightsHeading": "Ihre Rechte (Art. 15–21 DSGVO)",
+    "rightsIntro": "Sie haben jederzeit das Recht auf:",
+    "rightsList": [
+      "Auskunft über Ihre gespeicherten Daten (Art. 15)",
+      "Berichtigung unrichtiger Daten (Art. 16)",
+      "Löschung Ihrer Daten, sofern keine Aufbewahrungspflicht besteht (Art. 17)",
+      "Einschränkung der Verarbeitung (Art. 18)",
+      "Datenübertragbarkeit (Art. 20)",
+      "Widerspruch gegen die Verarbeitung auf Basis berechtigter Interessen (Art. 21)"
+    ],
+    "rightsContact": "Zur Ausübung Ihrer Rechte wenden Sie sich bitte per E-Mail an den oben genannten Verantwortlichen.",
+    "authorityHeading": "Beschwerderecht",
+    "authorityText": "Sie haben das Recht, bei der österreichischen Datenschutzbehörde (DSB) Beschwerde einzulegen, wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen die DSGVO verstößt.",
+    "authorityContact": "Österreichische Datenschutzbehörde, Barichgasse 40-42, 1030 Wien – dsb.gv.at"
   },
   "toast": {
     "couldNotLoadStations": "Stationen für diesen Ort konnten nicht geladen werden.",
