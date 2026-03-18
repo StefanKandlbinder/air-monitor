@@ -15,6 +15,7 @@ import type { UserLocation } from "@/components/station-map/types";
 import { toAqiLocationInputs } from "@/lib/aqi";
 import type { AqiResult } from "@/lib/server/map-data";
 import { WEEK_MS } from "@/lib/time";
+import { useRefetchOnVisible } from "@/lib/hooks/use-refetch-on-visible";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -42,6 +43,11 @@ export default function StationMap() {
 
   const queryClient = useQueryClient();
   const locationsQuery = useLocationsQuery();
+
+  useRefetchOnVisible(useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["aqi"] });
+    void queryClient.invalidateQueries({ queryKey: ["locations"] });
+  }, [queryClient]));
 
   const locations = useMemo(() => {
     const all = searchLocations ?? locationsQuery.data ?? [];
