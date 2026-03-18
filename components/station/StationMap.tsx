@@ -16,6 +16,7 @@ import { toAqiLocationInputs } from "@/lib/aqi";
 import type { AqiResult } from "@/lib/server/map-data";
 import { WEEK_MS } from "@/lib/time";
 import { useRefetchOnVisible } from "@/lib/hooks/use-refetch-on-visible";
+import { useGeolocation } from "@/lib/hooks/use-geolocation";
 import type { OpenAQLocation } from "@/lib/types";
 
 export default function StationMap() {
@@ -33,7 +34,6 @@ export default function StationMap() {
   const mapRef = useRef<MapRef | null>(null);
   const { resolvedTheme } = useTheme();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
   const [selectedParameters, setSelectedParameters] = useState<string[]>([]);
   const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
   const [searchLabel, setSearchLabel] = useState<string | null>(() => {
@@ -236,21 +236,9 @@ export default function StationMap() {
     );
   };
 
-  const centerOnUserLocation = (): void => {
-    if (!navigator.geolocation) {
-      toast.error(dict.toast.geolocationUnavailable, {
-        description: dict.toast.geolocationNotSupported,
-      });
-      return;
-    }
-
-    setIsLocating(true);
-
-    const onSuccess = (position: GeolocationPosition) => {
-      const nextLocation: UserLocation = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      };
+  const { locate, isLocating, isSupported: isGeolocationSupported } = useGeolocation(
+    useCallback(async (coords) => {
+      const nextLocation: UserLocation = coords;
       setUserLocation(nextLocation);
       setSearchLabel(null);
       pushLocation({ ...nextLocation, zoom: 12 });
@@ -259,33 +247,22 @@ export default function StationMap() {
         zoom: 12,
         duration: 1200,
       });
-      void loadStationsAt(nextLocation.latitude, nextLocation.longitude);
-      setIsLocating(false);
-    };
-
-    const onError = (error: GeolocationPositionError) => {
+      const result = await loadStationsAt(nextLocation.latitude, nextLocation.longitude);
+      if (result !== null && result.length === 0) toast.info(dict.toast.noStationsFound);
+    }, [loadStationsAt, pushLocation, dict.toast.noStationsFound]),
+    useCallback((error) => {
       toast.error(dict.toast.couldNotDetermineLocation, {
         description: error.message || dict.toast.locationLookupFailed,
       });
-      setIsLocating(false);
-    };
+    }, [dict.toast.couldNotDetermineLocation, dict.toast.locationLookupFailed]),
+  );
 
-    navigator.geolocation.getCurrentPosition(
-      onSuccess,
-      (error) => {
-        // POSITION_UNAVAILABLE (kCLErrorLocationUnknown) — retry once with low accuracy (WiFi/cell)
-        if (error.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
-          navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-            enableHighAccuracy: false,
-            timeout: 10_000,
-            maximumAge: 60_000,
-          });
-        } else {
-          onError(error);
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 }
-    );
+  const centerOnUserLocation = () => {
+    if (!isGeolocationSupported) {
+      toast.error(dict.toast.geolocationUnavailable, { description: dict.toast.geolocationNotSupported });
+      return;
+    }
+    locate();
   };
 
   const handleLocationSelect = (location: OpenAQLocation): void => {

@@ -12,7 +12,7 @@ import type { OpenAQLocation } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
-import { useTouchDevice } from "@/hooks/use-touch-device";
+import { useTouchDevice } from "@/lib/hooks/use-touch-device";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
 
