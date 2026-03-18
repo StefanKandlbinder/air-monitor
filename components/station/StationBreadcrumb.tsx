@@ -31,7 +31,7 @@ export default function StationBreadcrumb({ locationId }: { locationId: number }
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href={`/${lang}`}>{dict.breadcrumb.map}</Link>
+            <Link href={`/${lang}/explore`}>{dict.breadcrumb.map}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />

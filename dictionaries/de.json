@@ -3,10 +3,37 @@
     "title": "Luftmonitor",
     "titleTemplate": "%s – Luftmonitor",
     "description": "Echtzeit-Luftqualitätsdaten weltweit. PM2.5, PM10, NO2, Ozon und mehr – direkt von Messstationen.",
-    "keywords": ["Luftqualität", "Feinstaub", "PM2.5", "PM10", "NO2", "AQI", "Luftmonitor", "Messstationen", "Echtzeit"]
+    "keywords": [
+      "Luftqualität",
+      "Feinstaub",
+      "PM2.5",
+      "PM10",
+      "NO2",
+      "AQI",
+      "Luftmonitor",
+      "Messstationen",
+      "Echtzeit"
+    ]
   },
   "nav": {
-    "title": "Luftmonitor"
+    "title": "Luftmonitor",
+    "home": "Start",
+    "explore": "Erkunden"
+  },
+  "home": {
+    "eyebrow": "Echtzeit-Luftqualitätsdaten",
+    "headline": "To breathe,\nor not to breathe.",
+    "subheadline": "PM2.5, PM10, NO₂ und mehr – live von Messstationen weltweit.",
+    "cta": "Karte erkunden",
+    "realtimeTitle": "Live-Daten",
+    "realtimeDesc": "Stündlich aktualisierte Messwerte direkt von offiziellen Messstationsnetzwerken weltweit.",
+    "globalTitle": "Weltweite Abdeckung",
+    "globalDesc": "Tausende Stationen auf allen Kontinenten, durchsuchbar nach Ort oder Koordinaten.",
+    "aqiTitle": "AQI-Gesundheitsindex",
+    "aqiDesc": "PM2.5, PM10 und NO₂ zusammengefasst in einem US-EPA-Luftqualitätswert.",
+    "historyTitle": "7-Tage-Verlauf",
+    "historyDesc": "Stündliche oder tägliche Verlaufsdiagramme für jede Messstation.",
+    "poweredBy": "Daten bereitgestellt von"
   },
   "map": {
     "zoomIn": "Vergrößern",

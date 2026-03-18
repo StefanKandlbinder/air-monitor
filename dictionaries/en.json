@@ -6,7 +6,24 @@
     "keywords": ["air quality", "particulate matter", "PM2.5", "PM10", "NO2", "AQI", "air monitor", "monitoring stations", "real-time"]
   },
   "nav": {
-    "title": "Air Monitor"
+    "title": "Air Monitor",
+    "home": "Home",
+    "explore": "Explore"
+  },
+  "home": {
+    "eyebrow": "Real-time air quality data",
+    "headline": "To breathe,\nor not to breathe.",
+    "subheadline": "PM2.5, PM10, NO₂ and more – live from monitoring stations around the world.",
+    "cta": "Explore the map",
+    "realtimeTitle": "Live data",
+    "realtimeDesc": "Measurements updated hourly, directly from official monitoring networks worldwide.",
+    "globalTitle": "Global coverage",
+    "globalDesc": "Thousands of stations on every continent, searchable by location or coordinates.",
+    "aqiTitle": "AQI health index",
+    "aqiDesc": "PM2.5, PM10 and NO₂ combined into a single US EPA air quality score.",
+    "historyTitle": "7-day trends",
+    "historyDesc": "Hourly or daily historical charts for any monitoring station.",
+    "poweredBy": "Data provided by"
   },
   "map": {
     "zoomIn": "Zoom in",

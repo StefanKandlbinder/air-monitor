@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { NavLinks } from "@/components/layout/NavLinks";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
 import { notFound } from "next/navigation";
 
@@ -17,11 +18,8 @@ export default async function StationsLayout({ children, params }: Props) {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-50 h-14 border-b bg-background/95 backdrop-blur justify-between">
-        <div className="flex h-full w-full items-center justify-between px-6">
-          <Link href={`/${lang}`} className="flex items-center gap-2">
-            <h1 className="text-heading font-semibold tracking-tight text-xl bg-linear-to-r from-[#39b54a] via-[#f2c318] to-[#e53935] bg-clip-text text-transparent">
-              {dict.nav.title}
-            </h1>
+        <div className="flex h-full w-full items-center px-6 gap-4">
+          <Link href={`/${lang}`} className="flex items-center gap-2 grow">
             <Image
               src="/icons/icon-mark.svg"
               alt=""
@@ -29,7 +27,11 @@ export default async function StationsLayout({ children, params }: Props) {
               height={26.66}
               priority
             />
+            <h1 className="text-heading font-semibold tracking-tight text-2xl bg-linear-to-r from-[#39b54a] via-[#f2c318] to-[#e53935] bg-clip-text text-transparent">
+              {dict.nav.title}
+            </h1>
           </Link>
+          <NavLinks lang={lang} exploreLabel={dict.nav.explore} />
           <ThemeToggle />
         </div>
       </header>
