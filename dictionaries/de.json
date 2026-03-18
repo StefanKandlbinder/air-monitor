@@ -111,6 +111,23 @@
     "serverError": "Der OpenAQ-Dienst ist vorübergehend nicht verfügbar.",
     "unknown": "Ein unerwarteter Fehler ist aufgetreten."
   },
+  "footer": {
+    "impressum": "Impressum"
+  },
+  "impressum": {
+    "title": "Impressum",
+    "infoHeading": "Angaben gemäß § 5 ECG und § 25 MedienG",
+    "name": "Ihr Name",
+    "address": "Ihre Straße 1",
+    "city": "4020 Linz, Österreich",
+    "contactHeading": "Kontakt",
+    "emailLabel": "E-Mail",
+    "email": "ihre@email.com",
+    "purposeHeading": "Zweck der Website",
+    "purpose": "Diese Website stellt Echtzeit-Luftqualitätsdaten ausschließlich zu Informationszwecken zur Verfügung.",
+    "liabilityHeading": "Haftungsausschluss",
+    "liability": "Trotz sorgfältiger inhaltlicher Kontrolle übernehmen wir keine Haftung für die Inhalte externer Links. Für den Inhalt verlinkter Seiten sind ausschließlich deren Betreiber verantwortlich. Alle Daten stammen von OpenAQ und werden ohne Gewähr auf Richtigkeit oder Vollständigkeit bereitgestellt."
+  },
   "toast": {
     "couldNotLoadStations": "Stationen für diesen Ort konnten nicht geladen werden.",
     "geolocationUnavailable": "Standort nicht verfügbar",

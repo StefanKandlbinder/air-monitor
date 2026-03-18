@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { GaugeAnimation } from "@/lib/icons/GaugeAnimation";
 import { ArrowRight, Zap, Globe2, Activity, BarChart3 } from "lucide-react";
@@ -143,19 +142,6 @@ export default async function HomePage({ params }: Props) {
         </div>
       </section>
 
-      {/* ── Attribution ── */}
-      <div className="border-t px-6 py-4 flex items-center justify-center gap-2">
-        <span className="text-xs text-muted-foreground">{h.poweredBy}</span>
-        <Link href="https://openaq.org" target="_blank" rel="noopener noreferrer">
-          <Image
-            src="/openaq-logo.svg"
-            alt="OpenAQ"
-            width={56}
-            height={16}
-            className="opacity-40 transition-opacity hover:opacity-80 dark:invert"
-          />
-        </Link>
-      </div>
     </main>
   );
 }

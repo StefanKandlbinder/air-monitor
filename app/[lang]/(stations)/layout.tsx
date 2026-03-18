@@ -36,6 +36,30 @@ export default async function StationsLayout({ children, params }: Props) {
         </div>
       </header>
       {children}
+      <footer className="border-t px-6 py-4 flex items-center justify-center gap-3 text-xs text-muted-foreground flex-wrap">
+        <span>© {new Date().getFullYear()} {dict.nav.title}</span>
+        <span className="opacity-30">·</span>
+        <span className="flex items-center gap-1.5">
+          {dict.home.poweredBy}
+          <Link href="https://openaq.org" target="_blank" rel="noopener noreferrer">
+            <Image
+              src="/openaq-logo.svg"
+              alt="OpenAQ"
+              width={48}
+              height={14}
+              className="opacity-50 transition-opacity hover:opacity-90 dark:invert"
+            />
+          </Link>
+        </span>
+        <span className="opacity-30">·</span>
+        <Link href={`/${lang}/impressum`} className="hover:text-foreground transition-colors">
+          {dict.footer.impressum}
+        </Link>
+        <span className="opacity-30">·</span>
+        <Link href={`/${lang}/datenschutz`} className="hover:text-foreground transition-colors">
+          {dict.footer.privacy}
+        </Link>
+      </footer>
     </div>
   );
 }
