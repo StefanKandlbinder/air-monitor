@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { DictionaryProvider } from "@/components/providers/DictionaryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
+import { Analytics } from "@vercel/analytics/next";
 
 type Props = {
   children: React.ReactNode;
@@ -83,6 +84,7 @@ export default async function LangLayout({ children, params }: Props) {
             <Toaster position="bottom-left" />
           </DictionaryProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
