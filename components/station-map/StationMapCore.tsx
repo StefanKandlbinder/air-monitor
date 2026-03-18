@@ -3,14 +3,11 @@
 import { useRef, useState } from "react";
 import type { RefObject } from "react";
 import Map, { Marker, Popup, type MapRef } from "react-map-gl/maplibre";
-import { Compass, LocateFixed, Minus, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
+import { MapNavigation } from "@/components/station-map/MapNavigation";
 import type { UserLocation } from "@/components/station-map/types";
 import { AQI_COLORS } from "@/lib/aqi-colors";
 import type { OpenAQLocation } from "@/lib/types";
-import Link from "next/link";
-import Image from "next/image";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
 import { useTouchDevice } from "@/lib/hooks/use-touch-device";
 
@@ -208,62 +205,15 @@ export function StationMapCore({
       </Map>
 
       {showNavigation ? (
-        <div className="fixed left-4 bottom-4 flex gap-1">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => map()?.zoomIn()}
-            aria-label={dict.map.zoomIn}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => map()?.zoomOut()}
-            aria-label={dict.map.zoomOut}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="ml-2"
-            onClick={() => map()?.resetNorth({ duration: 300 })}
-            aria-label={dict.map.resetNorth}
-          >
-            <Compass
-              className="h-4 w-4 transition-transform"
-              style={{ transform: `rotate(${-bearing - 45}deg)` }}
-            />
-          </Button>
-          {onCenterOnUserLocation ? (
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={onCenterOnUserLocation}
-              disabled={isLocating}
-              aria-label={dict.map.myLocation}
-            >
-              <LocateFixed className="h-4 w-4" />
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
-      <Link
-        href="https://openaq.org"
-        className="absolute top-4 right-4 bg-background/95 backdrop-blur rounded-md p-2 z-10"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Image
-          src="/openaq-logo.svg"
-          alt="OpenAQ"
-          width={36}
-          height={20}
-          priority
+        <MapNavigation
+          bearing={bearing}
+          isLocating={isLocating}
+          onZoomIn={() => map()?.zoomIn()}
+          onZoomOut={() => map()?.zoomOut()}
+          onResetNorth={() => map()?.resetNorth({ duration: 300 })}
+          onCenterOnUserLocation={onCenterOnUserLocation}
         />
-      </Link>
+      ) : null}
     </div>
   );
 }
