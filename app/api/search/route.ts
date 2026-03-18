@@ -13,7 +13,11 @@ export async function GET(request: Request) {
 
   try {
     const revalidate = secondsUntilNextHour();
+    const t0 = performance.now();
     const locations = await fetchLocations(Number(lat), Number(lon));
+    const elapsed = performance.now() - t0;
+    const source = elapsed < 50 ? "cache" : "network";
+    console.log(`[search] locations near (${lat},${lon}): ${locations.length} results (${elapsed.toFixed(1)}ms, ${source})`);
     const aqiLocationInputs = toAqiLocationInputs(locations);
     const aqi = await fetchAqi(aqiLocationInputs);
     return NextResponse.json(

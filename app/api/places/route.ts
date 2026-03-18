@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     url.searchParams.set("format", "json");
     url.searchParams.set("limit", searchParams.get("limit") ?? "6");
 
+    const t0 = performance.now();
     const res = await fetch(url.toString(), {
       headers: {
         "Accept-Language": lang,
@@ -25,6 +26,9 @@ export async function GET(request: Request) {
       },
       next: { revalidate: 300 },
     });
+    const elapsed = performance.now() - t0;
+    const source = elapsed < 50 ? "cache" : "network";
+    console.log(`[nominatim] ${res.status} /search?q=${q} (${elapsed.toFixed(1)}ms, ${source})`);
 
     if (!res.ok) throw new Error(`Nominatim error ${res.status}`);
 
