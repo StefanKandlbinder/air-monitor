@@ -139,7 +139,14 @@ export function StationMapCore({
                   current?.id === location.id ? null : current,
                 )
               }
-              onFocus={() => !isTouchDevice && setHoveredLocation(location)}
+              onFocus={() => {
+                if (isTouchDevice) return;
+                setHoveredLocation(location);
+                map()?.easeTo({
+                  center: [location.coordinates.longitude, location.coordinates.latitude],
+                  duration: 500,
+                });
+              }}
               onBlur={() =>
                 !isTouchDevice &&
                 setHoveredLocation((current) =>
