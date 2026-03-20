@@ -1,6 +1,6 @@
-export { useLocationsQuery, useSingleLocationQuery, useLocationSearchQuery } from "./use-locations-query";
-export { useMeasurementsQuery, useSparklineMeasurementsQuery } from "./use-measurements-query";
-export { usePlaceSearchQuery } from "./use-place-search-query";
-export { useCountriesQuery } from "./use-countries-query";
-export { useLatestQuery } from "./use-latest-query";
-export type { NominatimResult } from "./use-place-search-query";
+export { useLocationsQuery, useSingleLocationQuery, useLocationSearchQuery } from "@/lib/queries/use-locations-query";
+export { useMeasurementsQuery, useSparklineMeasurementsQuery } from "@/lib/queries/use-measurements-query";
+export { usePlaceSearchQuery } from "@/lib/queries/use-place-search-query";
+export { useCountriesQuery } from "@/lib/queries/use-countries-query";
+export { useLatestQuery } from "@/lib/queries/use-latest-query";
+export type { NominatimResult } from "@/lib/queries/use-place-search-query";
