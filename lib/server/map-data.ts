@@ -41,7 +41,9 @@ export type AqiResult = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const MAX_AGE_MS = DAY_MS;
+// Match the location filter: if a station is recent enough to appear on the map (within WEEK_MS),
+// show its most recent AQI reading regardless of exact age.
+const MAX_AGE_MS = WEEK_MS;
 
 function isRecentLocation(location: OpenAQLocation): boolean {
   const last = location.datetimeLast?.utc;
