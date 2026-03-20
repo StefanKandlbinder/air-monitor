@@ -38,6 +38,7 @@ export default function StationMap() {
   const { resolvedTheme } = useTheme();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [searchLocations, setSearchLocations] = useState<OpenAQLocation[] | null>(null);
+  const [searchAqi, setSearchAqi] = useState<AqiResult | null>(null);
 
   const queryClient = useQueryClient();
   const locationsQuery = useLocationsQuery();
@@ -113,6 +114,7 @@ export default function StationMap() {
       queryClient.setQueryData(["aqi", locationIds], data.aqi);
       queryClient.setQueryData(["locations"], data.locations);
       setSearchLocations(data.locations);
+      setSearchAqi(data.aqi);
       return data.locations;
     } catch (err) {
       toast.error(dict.toast.couldNotLoadStations, {
@@ -177,9 +179,12 @@ export default function StationMap() {
 
   const handleClearSearch = (): void => {
     setSearchLocations(null);
+    setSearchAqi(null);
     setSearchLabel(null);
     hasFlownToDataRef.current = false; // allow re-fly to default centroid
   };
+
+  const activeAqi = searchLocations !== null ? searchAqi : aqiQuery.data;
 
   return (
     <MapCard
@@ -195,9 +200,9 @@ export default function StationMap() {
       onToggleParameter={toggleParameter}
       onClearParameters={() => setSelectedParameters([])}
       onCenterOnUserLocation={centerOnUserLocation}
-      locationColors={aqiQuery.data?.colors}
-      locationAqiValues={aqiQuery.data?.aqiValues}
-      locationLatestValues={aqiQuery.data?.latestValues}
+      locationColors={activeAqi?.colors}
+      locationAqiValues={activeAqi?.aqiValues}
+      locationLatestValues={activeAqi?.latestValues}
       onSelectLocation={handleLocationSelect}
       onSelectPlace={handlePlaceSelect}
       onClearSearch={handleClearSearch}
