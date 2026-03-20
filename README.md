@@ -1,19 +1,24 @@
 # linzair
 
-Next.js rewrite of `feinstaublinz`.
+Next.js rewrite of `feinstaublinz` — an air quality explorer for Linz, Austria, powered by [OpenAQ](https://openaq.org).
 
-## What was migrated
+## Features
 
-- Air data fetch and transformation logic
-- Route parity for API-style fetching
-- Hourly and daily check endpoints for tweet automation
-- Static landing page that documents valid params and examples
+- Interactive map of air quality stations around Linz
+- Measurement history with charts and sparklines
+- AQI calculation and color coding
+- Multi-language support (German / English)
 
-## Routes
+## API Routes
 
-- `GET /api/air/:station/:component/:mean/:limit`
-- `GET /api/jobs/hourly`
-- `GET /api/jobs/daily`
+- `GET /api/stations` — list stations near Linz
+- `GET /api/stations/:id` — single station details
+- `GET /api/latest?locationId=` — latest measurements for a station
+- `GET /api/measurements?locationId=&dateFrom=&dateTo=&rollup=hours|days` — historical measurements
+- `POST /api/aqi` — calculate AQI for given inputs
+- `GET /api/search?lat=&lon=` — find locations by coordinates
+- `GET /api/places?q=` — place name search via Nominatim
+- `GET /api/countries` — list available countries from OpenAQ
 
 ## Setup
 
@@ -23,7 +28,7 @@ Next.js rewrite of `feinstaublinz`.
 pnpm install
 ```
 
-2. Copy env file and add Twitter credentials:
+2. Copy env file and add your OpenAQ API key:
 
 ```bash
 cp .env.example .env.local

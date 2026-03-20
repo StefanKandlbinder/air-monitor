@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import { CompassIcon } from "@/lib/icons/CompassIcon";
 import { Button } from "@/components/ui/button";

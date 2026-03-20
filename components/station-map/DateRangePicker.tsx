@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format, parseISO } from "date-fns";
+import dayjs from "dayjs";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,11 @@ function getTimePart(iso: string, fallback: string): string {
 }
 
 function combineDateAndTime(date: Date, time: string): string {
-  return `${format(date, "yyyy-MM-dd")}T${time}`;
+  return `${dayjs(date).format("YYYY-MM-DD")}T${time}`;
 }
 
 function isoToDate(iso: string): Date | undefined {
-  return iso ? parseISO(getDatePart(iso)) : undefined;
+  return iso ? dayjs(getDatePart(iso)).toDate() : undefined;
 }
 
 export function DateRangePicker({
@@ -85,9 +85,9 @@ export function DateRangePicker({
 
   const label =
     committedFromDate && committedToDate
-      ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – ${format(committedToDate, "MMM d, yyyy")} ${committedToTime}`
+      ? `${dayjs(committedFromDate).format("MMM D, YYYY")} ${committedFromTime} – ${dayjs(committedToDate).format("MMM D, YYYY")} ${committedToTime}`
       : committedFromDate
-        ? `${format(committedFromDate, "MMM d, yyyy")} ${committedFromTime} – …`
+        ? `${dayjs(committedFromDate).format("MMM D, YYYY")} ${committedFromTime} – …`
         : dict.dateRange.selectRange;
 
   const canApply = !!draftFrom && !!draftTo;
