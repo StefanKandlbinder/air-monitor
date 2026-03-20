@@ -7,18 +7,15 @@ const LINZ_LON = 14.2858;
 
 export default async function ExplorePage() {
   const queryClient = new QueryClient();
-  const locations = await fetchLocations(LINZ_LAT, LINZ_LON);
-  queryClient.setQueryData(["locations"], locations);
 
-  const aqiLocationInputs = toAqiLocationInputs(locations);
-  const locationIds = aqiLocationInputs.map((l) => l.locationId).sort((a, b) => a - b);
-
-  if (aqiLocationInputs.length > 0) {
-    await queryClient.prefetchQuery({
-      queryKey: ["aqi", locationIds],
-      queryFn: () => fetchAqi(aqiLocationInputs),
-    });
-  }
+  await queryClient.prefetchQuery({
+    queryKey: ["map-data", null, null],
+    queryFn: async () => {
+      const locations = await fetchLocations(LINZ_LAT, LINZ_LON);
+      const aqi = await fetchAqi(toAqiLocationInputs(locations));
+      return { locations, aqi };
+    },
+  });
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
