@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useSessionFlag } from "@/lib/hooks/use-session-flag";
 
 type GaugeAnimationProps = {
@@ -8,6 +9,21 @@ type GaugeAnimationProps = {
 
 export function GaugeAnimation({ className }: GaugeAnimationProps) {
   const shouldAnimate = useSessionFlag("gauge-animated");
+  const needleRef = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    if (!shouldAnimate || !needleRef.current) return;
+    const animation = needleRef.current.animate(
+      [{ transform: "rotate(-135deg)" }, { transform: "rotate(15deg)" }],
+      {
+        duration: 1000,
+        delay: 1000,
+        easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        fill: "forwards",
+      }
+    );
+    return () => animation.cancel();
+  }, [shouldAnimate]);
 
   return (
     <svg
@@ -57,12 +73,10 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
 
       {/* Needle + pivot */}
       <g
+        ref={needleRef}
         style={{
           transformOrigin: "300px 220px",
           transform: shouldAnimate ? "rotate(-135deg)" : "rotate(15deg)",
-          animation: shouldAnimate
-            ? "ga-sweep 1s cubic-bezier(0.34, 1.56, 0.64, 1) 1s 1 forwards"
-            : undefined,
         }}
       >
         <path
@@ -71,15 +85,6 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
         />
         <circle cx="300" cy="220" r="22" fill="url(#ga-needle)" />
       </g>
-
-      {shouldAnimate && (
-        <style>{`
-          @keyframes ga-sweep {
-            from { transform: rotate(-135deg); }
-            to   { transform: rotate(15deg); }
-          }
-        `}</style>
-      )}
     </svg>
   );
 }
