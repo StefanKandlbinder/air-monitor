@@ -1,7 +1,7 @@
 "use client";
 
 import { Line, LineChart, ReferenceLine, ResponsiveContainer } from "recharts";
-import { PARAM_COLORS } from "@/lib/aqi-colors";
+import { PARAM_COLORS } from "@/lib/aqiColors";
 import type { OpenAQMeasurement } from "@/lib/types";
 
 export function ParameterSparkline({

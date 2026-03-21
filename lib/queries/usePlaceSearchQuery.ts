@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { NominatimResult } from "@/lib/types";
-import { assertResponseOk } from "@/lib/fetch-error";
+import { assertResponseOk } from "@/lib/fetchError";
 
 export type { NominatimResult };
 

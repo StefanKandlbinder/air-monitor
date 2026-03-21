@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSparklineMeasurementsQuery } from "@/components/station-map/queries/use-sparkline-measurements-query";
+import { useSparklineMeasurementsQuery } from "@/components/station-map/queries/useSparklineMeasurementsQuery";
 import { Clock, Info, MapPin } from "lucide-react";
 import dayjs from "dayjs";
-import { aqiToColor, aqiToLabel } from "@/lib/aqi-colors";
+import { aqiToColor, aqiToLabel } from "@/lib/aqiColors";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GaugeAnimationV2 } from "@/components/GaugeAnimationV2";
+import { GaugeAnimationCanvas } from "@/components/gauge/GaugeAnimationCanvas";
 import { ArrowRight, Zap, Globe2, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
-import { AQI_COLORS } from "@/lib/aqi-colors";
+import { AQI_COLORS } from "@/lib/aqiColors";
 
 type Props = { params: Promise<{ lang: string }> };
 
@@ -59,9 +59,9 @@ export default async function HomePage({ params }: Props) {
           </div>
 
           {/* Gauge visual */}
-          <div className="relative flex shrink-0 items-center justify-center">
+          <div className="relative w-80 sm:w-96 lg:w-[420px] shrink-0">
             <div className="absolute inset-0 rounded-full bg-[#00e400]/10 blur-3xl scale-110" />
-            <GaugeAnimationV2 className="relative w-80 sm:w-96 lg:w-[420px] drop-shadow-2xl" />
+            <GaugeAnimationCanvas className="relative drop-shadow-2xl" />
           </div>
         </div>
       </section>

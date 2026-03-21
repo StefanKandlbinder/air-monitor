@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
-import { openaqErrorResponse } from "@/lib/openaq-errors";
+import { openaqErrorResponse } from "@/lib/openaqErrors";
 import type { OpenAQLocation } from "@/lib/types";
 
 type OpenAQLocationResponse = {

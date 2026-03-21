@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { fetchAqi } from "@/lib/server/map-data";
+import { fetchAqi } from "@/lib/server/mapData";
 import { secondsUntilNextHour } from "@/lib/time";
-import { openaqErrorResponse } from "@/lib/openaq-errors";
+import { openaqErrorResponse } from "@/lib/openaqErrors";
 import type { LocationInput } from "@/lib/aqi";
 
 export async function POST(request: Request) {

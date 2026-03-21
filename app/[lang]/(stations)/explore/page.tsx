@@ -1,6 +1,6 @@
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import StationMap from "@/components/station/StationMap";
-import { fetchLocations, fetchAqi, toAqiLocationInputs } from "@/lib/server/map-data";
+import { fetchLocations, fetchAqi, toAqiLocationInputs } from "@/lib/server/mapData";
 
 const LINZ_LAT = 48.3069;
 const LINZ_LON = 14.2858;

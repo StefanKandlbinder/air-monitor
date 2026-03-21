@@ -23,7 +23,7 @@ import {
 import {
   usePlaceSearchQuery,
   type NominatimResult,
-} from "@/components/station-map/queries/use-place-search-query";
+} from "@/components/station-map/queries/usePlaceSearchQuery";
 import type { GroupedParameters } from "@/components/station-map/types";
 import { FilterPopover } from "@/components/station-map/FilterPopover";
 import { useDictionary } from "@/components/providers/DictionaryProvider";

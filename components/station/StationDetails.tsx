@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
-import { assertResponseOk } from "@/lib/fetch-error";
+import { useMeasurementsQuery } from "@/components/station-map/queries/useRangeMeasurementsQuery";
+import { assertResponseOk } from "@/lib/fetchError";
 import { useAqiCacheEntry } from "@/lib/hooks/useAqiCacheEntry";
-import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
+import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/useLocationsQuery";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";
 import { getAqiSensorParams, PARAM_LABELS, PARAMETER_LIMITS } from "@/lib/aqi";

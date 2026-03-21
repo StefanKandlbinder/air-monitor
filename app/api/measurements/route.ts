@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { openaqGet } from "@/lib/openaq";
-import { openaqErrorResponse, statusToErrorCode } from "@/lib/openaq-errors";
+import { openaqErrorResponse, statusToErrorCode } from "@/lib/openaqErrors";
 import { AQI_PARAMS, normalizeParam } from "@/lib/aqi";
 import { withConcurrency } from "@/lib/concurrency";
 import type { OpenAQLocation, OpenAQMeasurement, Rollup } from "@/lib/types";

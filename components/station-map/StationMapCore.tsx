@@ -6,7 +6,7 @@ import Map, { Marker, Popup, type MapRef } from "react-map-gl/maplibre";
 import { HoverPopupCard } from "@/components/station-map/HoverPopupCard";
 import { MapNavigation } from "@/components/station-map/MapNavigation";
 import type { UserLocation } from "@/components/station-map/types";
-import { AQI_COLORS } from "@/lib/aqi-colors";
+import { AQI_COLORS } from "@/lib/aqiColors";
 import type { OpenAQLocation } from "@/lib/types";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
 import { useTouchDevice } from "@/lib/hooks/useTouchDevice";

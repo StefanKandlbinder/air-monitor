@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
+import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/useLocationsQuery";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
 import {
   Breadcrumb,

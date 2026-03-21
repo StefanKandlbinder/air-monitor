@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { OpenAQLocation } from "@/lib/types";
-import { assertResponseOk } from "@/lib/fetch-error";
+import { assertResponseOk } from "@/lib/fetchError";
 
 const STALE_TIME = 1000 * 60 * 60 * 24 * 7; // 7 days
 

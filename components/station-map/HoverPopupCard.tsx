@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import { Clock, Layers, MapPin } from "lucide-react";
-import { aqiToLabel } from "@/lib/aqi-colors";
+import { aqiToLabel } from "@/lib/aqiColors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

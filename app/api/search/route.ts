@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { fetchLocations, fetchAqi } from "@/lib/server/map-data";
+import { fetchLocations, fetchAqi } from "@/lib/server/mapData";
 import { toAqiLocationInputs } from "@/lib/aqi";
 import { secondsUntilNextHour } from "@/lib/time";
-import { openaqErrorResponse } from "@/lib/openaq-errors";
+import { openaqErrorResponse } from "@/lib/openaqErrors";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

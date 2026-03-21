@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { openaqGet } from "@/lib/openaq";
-import { aqiToColor, AQI_COLORS } from "@/lib/aqi-colors";
+import { aqiToColor, AQI_COLORS } from "@/lib/aqiColors";
 import { calcSubIndex, toAqiLocationInputs } from "@/lib/aqi";
 import type { LocationInput } from "@/lib/aqi";
 export { toAqiLocationInputs } from "@/lib/aqi";

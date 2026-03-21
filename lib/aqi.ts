@@ -1,4 +1,4 @@
-import { aqiToColor, AQI_COLORS } from "@/lib/aqi-colors";
+import { aqiToColor, AQI_COLORS } from "@/lib/aqiColors";
 import type { OpenAQLocation } from "@/lib/types";
 
 export const AQI_PARAMS = new Set(["pm25", "pm2.5", "pm10", "o3", "co", "so2", "no2"]);

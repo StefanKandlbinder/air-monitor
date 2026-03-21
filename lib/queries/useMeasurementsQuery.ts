@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { MeasurementsResponse, Rollup } from "@/lib/types";
 import { floorToHourIso, HOUR_MS } from "@/lib/time";
-import { assertResponseOk } from "@/lib/fetch-error";
+import { assertResponseOk } from "@/lib/fetchError";
 
 type DateRange = {
   dateFrom: string;

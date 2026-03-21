@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PARAM_COLORS } from "@/lib/aqi-colors";
+import { PARAM_COLORS } from "@/lib/aqiColors";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
