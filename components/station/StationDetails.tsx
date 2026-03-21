@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useMeasurementsQuery } from "@/components/station-map/queries/use-range-measurements-query";
 import { assertResponseOk } from "@/lib/fetch-error";
-import { useAqiCacheEntry } from "@/lib/hooks/use-aqi-cache-entry";
+import { useAqiCacheEntry } from "@/lib/hooks/useAqiCacheEntry";
 import { useLocationsQuery, useSingleLocationQuery } from "@/components/station-map/queries/use-locations-query";
 import { DetailsPanel } from "@/components/station-map/DetailsPanel";
 import type { StationSnapshotResponse } from "@/components/station-map/types";

@@ -15,10 +15,10 @@ import { toAqiLocationInputs } from "@/lib/aqi";
 import { assertResponseOk } from "@/lib/fetch-error";
 import type { AqiResult } from "@/lib/server/map-data";
 import { WEEK_MS } from "@/lib/time";
-import { useRefetchOnVisible } from "@/lib/hooks/use-refetch-on-visible";
-import { useGeolocation } from "@/lib/hooks/use-geolocation";
-import { useParameterFilter } from "@/lib/hooks/use-parameter-filter";
-import { useMapUrlState } from "@/lib/hooks/use-map-url-state";
+import { useRefetchOnVisible } from "@/lib/hooks/useRefetchOnVisible";
+import { useGeolocation } from "@/lib/hooks/useGeolocation";
+import { useParameterFilter } from "@/lib/hooks/useParameterFilter";
+import { useMapUrlState } from "@/lib/hooks/useMapUrlState";
 import type { OpenAQLocation } from "@/lib/types";
 
 type MapData = { locations: OpenAQLocation[]; aqi: AqiResult };

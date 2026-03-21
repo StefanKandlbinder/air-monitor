@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 
 const CX = 250;
 const CY = 200;
@@ -101,19 +102,19 @@ type Props = { className?: string };
 export function GaugeAnimationV2({ className }: Props) {
   const needleRef = useRef<SVGGElement>(null);
   const maskPathRef = useRef<SVGPathElement>(null);
+  const gaugeStorage = useLocalStorage("gauge-v2", 0);
+
   // On a fresh page load (refresh / first visit) sessionStorage has no flag yet
   // → start the counter at 0 and animate up. On in-session SPA navigation the
   // flag is already set → start at the stored value so there's no jump.
   const [displayVal, setDisplayVal] = useState(() => {
     if (typeof window === "undefined") return 0;
     const inSession = sessionStorage.getItem("gauge-v2-session") === "1";
-    return inSession
-      ? Math.round(parseFloat(localStorage.getItem("gauge-v2") ?? "0"))
-      : 0;
+    return inSession ? Math.round(gaugeStorage.get()) : 0;
   });
 
   useLayoutEffect(() => {
-    const lastVal = parseFloat(localStorage.getItem("gauge-v2") ?? "0");
+    const lastVal = gaugeStorage.get();
 
     // Distinguish refresh (no session flag) from in-session navigation.
     const inSession = sessionStorage.getItem("gauge-v2-session") === "1";
@@ -123,10 +124,10 @@ export function GaugeAnimationV2({ className }: Props) {
     let targetVal: number;
 
     if (!inSession) {
-      // Refresh / first visit: sweep from 0 → stored value (visually satisfying
-      // cold-start). No new random target; localStorage already holds the right value.
+      // Refresh / first visit: sweep from 0 → stored value.
+      // On the very first visit there is no stored value yet, so pick a random target.
       startVal = 0;
-      targetVal = lastVal;
+      targetVal = gaugeStorage.has() ? lastVal : 50 + Math.random() * 300;
     } else {
       // In-session navigation: snap to where we left off, then animate to a new
       // random target so the gauge keeps moving on every page visit.
@@ -191,11 +192,10 @@ export function GaugeAnimationV2({ className }: Props) {
       if (t < 1) {
         raf = requestAnimationFrame(tick);
       } else {
-        // On in-session navigation write the new target. On refresh targetVal
-        // equals lastVal so the stored value is already correct — skip the write.
-        if (inSession) {
-          localStorage.setItem("gauge-v2", String(targetVal));
-        }
+        // Always write the target so subsequent refreshes/navigations start
+        // from the right position. (On a plain refresh targetVal === lastVal
+        // so the write is a no-op in practice, but it also covers first visit.)
+        gaugeStorage.set(targetVal);
       }
     };
 
@@ -297,7 +297,7 @@ export function GaugeAnimationV2({ className }: Props) {
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={15}
-            fontFamily="system-ui, sans-serif"
+            fontFamily="ui-monospace, monospace"
           >
             {label}
           </text>
@@ -320,7 +320,7 @@ export function GaugeAnimationV2({ className }: Props) {
         textAnchor="middle"
         fontSize={48}
         fontWeight="700"
-        fontFamily="system-ui, sans-serif"
+        fontFamily="ui-monospace, monospace"
         suppressHydrationWarning
       >
         {displayVal}
@@ -332,7 +332,7 @@ export function GaugeAnimationV2({ className }: Props) {
         textAnchor="middle"
         fontSize={20}
         letterSpacing="3"
-        fontFamily="system-ui, sans-serif"
+        fontFamily="ui-monospace, monospace"
       >
         AQI
       </text>

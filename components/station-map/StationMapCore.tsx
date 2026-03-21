@@ -9,7 +9,7 @@ import type { UserLocation } from "@/components/station-map/types";
 import { AQI_COLORS } from "@/lib/aqi-colors";
 import type { OpenAQLocation } from "@/lib/types";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
-import { useTouchDevice } from "@/lib/hooks/use-touch-device";
+import { useTouchDevice } from "@/lib/hooks/useTouchDevice";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
 
