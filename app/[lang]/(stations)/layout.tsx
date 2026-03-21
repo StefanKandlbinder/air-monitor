@@ -37,7 +37,7 @@ export default async function StationsLayout({ children, params }: Props) {
         </div>
       </header>
       <div
-        className="grid min-h-dvh"
+        className="grid min-h-svh"
         style={{ gridTemplateRows: "1fr auto" }}
       >
         {children}
