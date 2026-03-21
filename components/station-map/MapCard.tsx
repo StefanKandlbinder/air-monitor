@@ -53,7 +53,7 @@ export function MapCard({
 }: MapCardProps) {
   return (
     <div
-      className="relative overflow-hidden h-full"
+      className="explore-map relative overflow-hidden h-full"
     >
       {/* Full-height map */}
       <StationMapCore

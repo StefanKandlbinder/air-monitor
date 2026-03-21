@@ -121,9 +121,10 @@ export default function StationDetails() {
 
   const isLoading =
     locationsQuery.isPending ||
-    singleLocationQuery.isFetching ||
-    aqiQuery.isFetching ||
-    measurementsQuery.isPending;
+    singleLocationQuery.isFetching;
+
+  // Fall back to just the active station if the full list hasn't loaded yet or errored
+  const locations = locationsQuery.data ?? (location ? [location] : []);
 
   const handleRollupChange = (nextRollup: Rollup): void => {
     setRollup(nextRollup);
@@ -134,7 +135,7 @@ export default function StationDetails() {
     <DetailsPanel
       isLoading={isLoading}
       activeSelectedLocation={location}
-      locations={locationsQuery.data ?? []}
+      locations={locations}
       locationColors={locationColors}
       snapshot={snapshot}
       aqiColor={aqiData?.color}

@@ -163,9 +163,10 @@ html body .maplibregl-popup-tip {
   display: none !important;
 }
 
+/* mobile nav offset: only on explore full-screen map */
 @media (max-width: 639px) {
-  .maplibregl-ctrl-bottom-left,
-  .maplibregl-ctrl-bottom-right {
+  .explore-map .maplibregl-ctrl-bottom-left,
+  .explore-map .maplibregl-ctrl-bottom-right {
     bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 }

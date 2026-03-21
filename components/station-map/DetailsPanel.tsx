@@ -117,7 +117,7 @@ export function DetailsPanel({
                 <Skeleton className="h-20 w-full" />
               </div>
             </div>
-          ) : activeSelectedLocation && snapshot ? (
+          ) : activeSelectedLocation ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-[30%_1fr]">
               {/* Left: station info + map */}
               <div className="flex flex-col gap-4 min-w-0">
@@ -218,15 +218,21 @@ export function DetailsPanel({
                 </div>
               </div>
 
-              {/* Right: measurement cards */}
+              {/* Right: measurement cards — skeleton while AQI data is loading */}
               <div className="flex flex-col gap-3">
-                {snapshot.readings.map((reading) => (
+                {snapshot ? snapshot.readings.map((reading) => (
                   <ParameterReadingCard
                     key={reading.parameter}
                     reading={reading}
                     measurements={sparklineMeasurements}
                   />
-                ))}
+                )) : (
+                  <>
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </>
+                )}
               </div>
             </div>
           ) : (

@@ -1,9 +1,14 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import StationDetails from "@/components/station/StationDetails";
 import StationBreadcrumb from "@/components/station/StationBreadcrumb";
 import { openaqGet } from "@/lib/openaq";
+import { fetchLocations } from "@/lib/server/mapData";
 import type { Rollup, OpenAQLocation } from "@/lib/types";
+
+const LINZ_LAT = 48.3069;
+const LINZ_LON = 14.2858;
 
 type Params = {
   lang: string;
@@ -58,12 +63,18 @@ export default async function StationPeriodPage({
     notFound();
   }
 
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["locations"],
+    queryFn: () => fetchLocations(LINZ_LAT, LINZ_LON),
+  });
+
   return (
-    <>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="hidden sm:block">
         <StationBreadcrumb locationId={Number(id)} />
       </div>
       <StationDetails key={id} />
-    </>
+    </HydrationBoundary>
   );
 }
