@@ -46,7 +46,7 @@ async function fetchDefaultMapData(): Promise<MapData> {
 }
 
 async function fetchSearchMapData(lat: number, lon: number): Promise<MapData> {
-  const res = await fetch(`/api/search?lat=${lat}&lon=${lon}`);
+  const res = await fetch(`/api/search?lat=${lat}&lon=${lon}`, { cache: "no-store" });
   await assertResponseOk(res);
   const { locations, aqi } = (await res.json()) as MapData;
   return { locations, aqi };

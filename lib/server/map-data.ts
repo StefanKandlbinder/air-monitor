@@ -6,7 +6,7 @@ import type { LocationInput } from "@/lib/aqi";
 export { toAqiLocationInputs } from "@/lib/aqi";
 export type { LocationInput, SensorMeta } from "@/lib/aqi";
 import { withConcurrency } from "@/lib/concurrency";
-import { DAY_MS, WEEK_MS, secondsUntilNextHour } from "@/lib/time";
+import { WEEK_MS, secondsUntilNextHour } from "@/lib/time";
 import type { OpenAQLocation } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -67,17 +67,37 @@ export const fetchLocations = unstable_cache(
   { revalidate: 604800 }
 );
 
+// Module-level blocking cache: when TTL expires, the first request fetches fresh data
+// and all concurrent requests wait for the same promise (no stale-while-revalidate).
+type LatestCacheEntry = { value: OpenAQLatestEntry[]; expiresAt: number; promise?: Promise<OpenAQLatestEntry[]> };
+const latestCache = new Map<number, LatestCacheEntry>();
+
 async function fetchLocationLatest(locationId: number): Promise<OpenAQLatestEntry[]> {
-  try {
-    const data = await openaqGet<OpenAQLatestResponse>(
-      `/v3/locations/${locationId}/latest`,
-      undefined,
-      { revalidate: secondsUntilNextHour() }
-    );
-    return data.results;
-  } catch {
-    return [];
+  const now = Date.now();
+  const entry = latestCache.get(locationId);
+
+  if (entry) {
+    if (now < entry.expiresAt) return entry.value;
+    if (entry.promise) return entry.promise;
   }
+
+  const newEntry: LatestCacheEntry = { value: [], expiresAt: now + secondsUntilNextHour() * 1000 };
+  newEntry.promise = openaqGet<OpenAQLatestResponse>(
+    `/v3/locations/${locationId}/latest`,
+    undefined,
+    { cache: "no-store" }
+  )
+    .then((data) => {
+      newEntry.value = data.results;
+      newEntry.promise = undefined;
+      return data.results;
+    })
+    .catch(() => {
+      latestCache.delete(locationId);
+      return [];
+    });
+  latestCache.set(locationId, newEntry);
+  return newEntry.promise;
 }
 
 async function fetchAqiImpl(locations: LocationInput[]): Promise<AqiResult> {
