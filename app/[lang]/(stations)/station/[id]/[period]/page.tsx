@@ -60,7 +60,9 @@ export default async function StationPeriodPage({
 
   return (
     <>
-      <StationBreadcrumb locationId={Number(id)} />
+      <div className="hidden sm:block">
+        <StationBreadcrumb locationId={Number(id)} />
+      </div>
       <StationDetails key={id} />
     </>
   );

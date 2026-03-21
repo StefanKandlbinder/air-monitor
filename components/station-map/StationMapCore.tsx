@@ -70,18 +70,6 @@ export function StationMapCore({
         initialViewState={initialViewState}
         mapStyle={mapStyle}
         style={{ width: "100%", height: "100%" }}
-        onLoad={
-          onMoveEnd
-            ? (e) => {
-                const { lng, lat } = e.target.getCenter();
-                onMoveEnd({
-                  longitude: lng,
-                  latitude: lat,
-                  zoom: e.target.getZoom(),
-                });
-              }
-            : undefined
-        }
         onMoveEnd={
           onMoveEnd
             ? (e) => {

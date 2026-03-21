@@ -3,23 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import type { MapRef } from "react-map-gl/maplibre";
+import { useSearchParams } from "next/navigation";
+import { saveMapPosition } from "@/lib/hooks/useLastMapPosition";
 
 type MapCenter = { longitude: number; latitude: number; zoom: number };
-
-function readMapCenterFromUrl(): MapCenter {
-  if (typeof window === "undefined") {
-    return { longitude: 14.2978, latitude: 48.3233, zoom: 12 };
-  }
-  const sp = new URLSearchParams(window.location.search);
-  const lat = sp.get("lat");
-  const lng = sp.get("lng");
-  const zoom = sp.get("zoom");
-  return {
-    longitude: lng ? parseFloat(lng) : 14.2978,
-    latitude: lat ? parseFloat(lat) : 48.3233,
-    zoom: zoom ? parseFloat(zoom) : 12,
-  };
-}
 
 function buildLocationParams(
   center: MapCenter,
@@ -38,22 +25,21 @@ export function useMapUrlState(
   mapRef: RefObject<MapRef | null>,
   onFetchAt: (lat: string, lng: string) => void,
 ) {
-  const [mapCenter] = useState(readMapCenterFromUrl);
-  const [searchLabel, setSearchLabel] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("label");
+  const searchParams = useSearchParams();
+  const [mapCenter] = useState<MapCenter>(() => {
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+    const zoom = searchParams.get("zoom");
+    return {
+      longitude: lng ? parseFloat(lng) : 14.2978,
+      latitude: lat ? parseFloat(lat) : 48.3233,
+      zoom: zoom ? parseFloat(zoom) : 12,
+    };
   });
+  const [searchLabel, setSearchLabel] = useState<string | null>(() =>
+    searchParams.get("label"),
+  );
   const popstateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // On mount: if URL has lat/lng, fetch stations there
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sp = new URLSearchParams(window.location.search);
-    const lat = sp.get("lat");
-    const lng = sp.get("lng");
-    if (lat && lng) onFetchAt(lat, lng);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Respond to browser back/forward
   useEffect(() => {
@@ -84,15 +70,15 @@ export function useMapUrlState(
   }, [mapRef, onFetchAt]);
 
   const handleMoveEnd = (center: MapCenter) => {
-    window.history.replaceState(
-      null,
-      "",
-      `?${buildLocationParams(center, searchLabel ?? undefined)}`,
-    );
+    const params = buildLocationParams(center, searchLabel ?? undefined);
+    window.history.replaceState(null, "", `?${params}`);
+    saveMapPosition(params);
   };
 
   const pushLocation = (center: MapCenter, label?: string) => {
-    window.history.pushState(null, "", `?${buildLocationParams(center, label)}`);
+    const params = buildLocationParams(center, label);
+    window.history.pushState(null, "", `?${params}`);
+    saveMapPosition(params);
   };
 
   return { mapCenter, searchLabel, setSearchLabel, handleMoveEnd, pushLocation };

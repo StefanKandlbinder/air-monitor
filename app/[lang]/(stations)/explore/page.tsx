@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import StationMap from "@/components/station/StationMap";
 import { fetchLocations, fetchAqi, toAqiLocationInputs } from "@/lib/server/mapData";
@@ -19,7 +20,9 @@ export default async function ExplorePage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <StationMap />
+      <Suspense>
+        <StationMap />
+      </Suspense>
     </HydrationBoundary>
   );
 }

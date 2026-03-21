@@ -24,8 +24,6 @@ import {
   usePlaceSearchQuery,
   type NominatimResult,
 } from "@/components/station-map/queries/usePlaceSearchQuery";
-import type { GroupedParameters } from "@/components/station-map/types";
-import { FilterPopover } from "@/components/station-map/FilterPopover";
 import { useDictionary } from "@/components/providers/DictionaryProvider";
 
 export type PlaceSelection = {
@@ -37,19 +35,11 @@ export type PlaceSelection = {
 type LocationSearchProps = {
   onSelectPlace: (place: PlaceSelection) => void;
   selectedLabel?: string | null;
-  groupedParameters: GroupedParameters;
-  selectedParameters: string[];
-  onToggleParameter: (parameter: string) => void;
-  onClearParameters: () => void;
 };
 
 export function LocationSearch({
   onSelectPlace,
   selectedLabel = null,
-  groupedParameters,
-  selectedParameters,
-  onToggleParameter,
-  onClearParameters,
 }: LocationSearchProps) {
   const dict = useDictionary();
   const { lang } = useParams<{ lang?: string }>();
@@ -144,14 +134,6 @@ export function LocationSearch({
             }}
             placeholder={selectedLabel ?? dict.locationSearch.placeholder}
           />
-          <InputGroupAddon className="mr-0 pr-1.5" align="inline-end">
-            <FilterPopover
-              groupedParameters={groupedParameters}
-              selectedParameters={selectedParameters}
-              onToggleParameter={onToggleParameter}
-              onClear={onClearParameters}
-            />
-          </InputGroupAddon>
         </InputGroup>
       </PopoverAnchor>
       <PopoverContent

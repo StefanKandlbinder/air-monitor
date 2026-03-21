@@ -1,7 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { NavLinks } from "@/components/layout/NavLinks";
+import { MobileNav } from "@/components/layout/MobileNav";
+import { FooterWrapper } from "@/components/layout/FooterWrapper";
 import { OpenAQIcon } from "@/lib/icons/OpenAQIcon";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
 import { notFound } from "next/navigation";
@@ -20,19 +22,8 @@ export default async function StationsLayout({ children, params }: Props) {
     <>
       <header className="fixed top-0 inset-x-0 z-50 h-14 bg-background/20 backdrop-blur-md justify-between">
         <div className="flex h-full w-full items-center px-6 gap-4">
-          <Link href={`/${lang}`} className="flex items-center gap-2 grow">
-            <Image
-              src="/icons/icon-mark.svg"
-              alt=""
-              width={40}
-              height={26.66}
-              priority
-            />
-            <h1 className="text-heading font-semibold tracking-tight text-2xl bg-linear-to-r from-[#00e400] via-[#ff7e00] to-[#7e0023] bg-clip-text text-transparent">
-              {dict.nav.title}
-            </h1>
-          </Link>
-          <NavLinks lang={lang} exploreLabel={dict.nav.explore} />
+          <HeaderLogo lang={lang} title={dict.nav.title} />
+          <NavLinks lang={lang} exploreLabel={dict.nav.explore} className="hidden sm:flex" />
           <ThemeToggle />
         </div>
       </header>
@@ -41,7 +32,7 @@ export default async function StationsLayout({ children, params }: Props) {
         style={{ gridTemplateRows: "1fr auto" }}
       >
         {children}
-        <footer className="text-xs text-muted-foreground overflow-x-auto scrollbar-none">
+        <FooterWrapper><footer className="text-xs text-muted-foreground overflow-x-auto scrollbar-none pb-16 sm:pb-0">
         <ul className="flex items-center justify-center gap-3 whitespace-nowrap px-6 py-4 min-w-max mx-auto">
           <li>© {new Date().getFullYear()} {dict.nav.title}</li>
           <li className="opacity-30" aria-hidden>·</li>
@@ -70,8 +61,9 @@ export default async function StationsLayout({ children, params }: Props) {
             </Link>
           </li>
         </ul>
-        </footer>
+        </footer></FooterWrapper>
       </div>
+      <MobileNav lang={lang} homeLabel={dict.nav.title} exploreLabel={dict.nav.explore} />
     </>
   );
 }

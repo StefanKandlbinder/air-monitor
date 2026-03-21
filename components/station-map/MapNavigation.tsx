@@ -25,7 +25,7 @@ export function MapNavigation({
   const dict = useDictionary();
 
   return (
-    <div className="absolute left-4 bottom-4 flex gap-1 z-10">
+    <div className="absolute left-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+1rem)] sm:bottom-4 flex gap-1 z-10">
       <Button
         variant="secondary"
         size="icon"

@@ -162,3 +162,10 @@ html body .maplibregl-popup-content {
 html body .maplibregl-popup-tip {
   display: none !important;
 }
+
+@media (max-width: 639px) {
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}

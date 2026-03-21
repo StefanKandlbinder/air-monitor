@@ -7,10 +7,7 @@ import {
   type PlaceSelection,
 } from "@/components/station-map/LocationSearch";
 import { StationMapCore } from "@/components/station-map/StationMapCore";
-import type {
-  GroupedParameters,
-  UserLocation,
-} from "@/components/station-map/types";
+import type { UserLocation } from "@/components/station-map/types";
 import type { OpenAQLocation } from "@/lib/types";
 
 type MapCardProps = {
@@ -24,13 +21,9 @@ type MapCardProps = {
     number,
     Record<string, { value: number; units: string }>
   >;
-  selectedParameters: string[];
-  groupedParameters: GroupedParameters;
   isLocating: boolean;
   userLocation: UserLocation | null;
   selectedLabel?: string | null;
-  onToggleParameter: (parameter: string) => void;
-  onClearParameters: () => void;
   onCenterOnUserLocation: () => void;
   onSelectLocation: (location: OpenAQLocation) => void;
   onSelectPlace: (place: PlaceSelection) => void;
@@ -50,13 +43,9 @@ export function MapCard({
   locationColors,
   locationAqiValues,
   locationLatestValues,
-  selectedParameters,
-  groupedParameters,
   isLocating,
   userLocation,
   selectedLabel,
-  onToggleParameter,
-  onClearParameters,
   onCenterOnUserLocation,
   onSelectLocation,
   onSelectPlace,
@@ -88,10 +77,6 @@ export function MapCard({
         <LocationSearch
           onSelectPlace={onSelectPlace}
           selectedLabel={selectedLabel}
-          groupedParameters={groupedParameters}
-          selectedParameters={selectedParameters}
-          onToggleParameter={onToggleParameter}
-          onClearParameters={onClearParameters}
         />
       </div>
 

@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GaugeAnimationCanvas } from "@/components/gauge/GaugeAnimationCanvas";
-import { ArrowRight, Zap, Globe2, Activity, BarChart3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Zap, Globe2, Activity, BarChart3 } from "lucide-react";
+import { ExploreLinkButton } from "@/components/layout/ExploreLinkButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
 import { AQI_COLORS } from "@/lib/aqiColors";
@@ -45,12 +44,7 @@ export default async function HomePage({ params }: Props) {
               {h.subheadline}
             </p>
 
-            <Button asChild size="lg" className="gap-2 px-8 text-base">
-              <Link href={`/${lang}/explore`}>
-                {h.cta}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            <ExploreLinkButton lang={lang} label={h.cta} />
           </div>
 
           {/* Gauge visual */}
