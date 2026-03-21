@@ -31,7 +31,7 @@ export default async function StationsLayout({ children, params }: Props) {
               height={26.66}
               priority
             />
-            <h1 className="text-heading font-semibold tracking-tight text-2xl bg-linear-to-r from-[#39b54a] via-[#f2c318] to-[#e53935] bg-clip-text text-transparent">
+            <h1 className="text-heading font-semibold tracking-tight text-2xl bg-linear-to-r from-[#00e400] via-[#ff7e00] to-[#7e0023] bg-clip-text text-transparent">
               {dict.nav.title}
             </h1>
           </Link>

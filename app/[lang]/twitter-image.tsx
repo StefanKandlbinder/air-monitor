@@ -29,7 +29,7 @@ export default async function TwitterImage({ params }: Props) {
           overflow: "hidden",
         }}
       >
-        {/* Green blob */}
+        {/* Good blob */}
         <div
           style={{
             position: "absolute",
@@ -38,11 +38,11 @@ export default async function TwitterImage({ params }: Props) {
             width: 600,
             height: 600,
             borderRadius: "50%",
-            background: "rgba(57,181,74,0.15)",
+            background: "rgba(0,228,0,0.15)",
             filter: "blur(80px)",
           }}
         />
-        {/* Red blob */}
+        {/* Hazardous blob */}
         <div
           style={{
             position: "absolute",
@@ -51,7 +51,7 @@ export default async function TwitterImage({ params }: Props) {
             width: 500,
             height: 500,
             borderRadius: "50%",
-            background: "rgba(229,57,53,0.15)",
+            background: "rgba(126,0,35,0.15)",
             filter: "blur(80px)",
           }}
         />
@@ -66,14 +66,22 @@ export default async function TwitterImage({ params }: Props) {
         >
           <defs>
             <linearGradient id="a" x1="140" x2="460" y1="0" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#39b54a" />
-              <stop offset="50%" stopColor="#f2c318" />
-              <stop offset="100%" stopColor="#e53935" />
+              <stop offset="0%"   stopColor="#00e400" />
+              <stop offset="10%"  stopColor="#ffff00" />
+              <stop offset="20%"  stopColor="#ff7e00" />
+              <stop offset="30%"  stopColor="#ff0000" />
+              <stop offset="40%"  stopColor="#8f3f97" />
+              <stop offset="60%"  stopColor="#7e0023" />
+              <stop offset="100%" stopColor="#7e0023" />
             </linearGradient>
             <linearGradient id="b" x1="300" x2="377" y1="220" y2="128" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#39b54a" />
-              <stop offset="50%" stopColor="#f2c318" />
-              <stop offset="100%" stopColor="#e53935" />
+              <stop offset="0%"   stopColor="#00e400" />
+              <stop offset="10%"  stopColor="#ffff00" />
+              <stop offset="20%"  stopColor="#ff7e00" />
+              <stop offset="30%"  stopColor="#ff0000" />
+              <stop offset="40%"  stopColor="#8f3f97" />
+              <stop offset="60%"  stopColor="#7e0023" />
+              <stop offset="100%" stopColor="#7e0023" />
             </linearGradient>
           </defs>
           <g fill="none" stroke="url(#a)" strokeWidth="40" strokeLinecap="round">
@@ -91,7 +99,7 @@ export default async function TwitterImage({ params }: Props) {
             fontSize: 72,
             fontWeight: 700,
             letterSpacing: "-2px",
-            background: "linear-gradient(90deg, #39b54a, #f2c318, #e53935)",
+            background: "linear-gradient(90deg, #00e400, #ff7e00, #7e0023)",
             backgroundClip: "text",
             color: "transparent",
             marginBottom: 16,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GaugeAnimation } from "@/lib/icons/GaugeAnimation";
+import { GaugeAnimationV2 } from "@/components/GaugeAnimationV2";
 import { ArrowRight, Zap, Globe2, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,9 +30,9 @@ export default async function HomePage({ params }: Props) {
       {/* ── Hero ── */}
       <section className="relative flex min-h-[calc(100dvh-3.5rem)] items-center overflow-hidden px-6 py-24">
         {/* Ambient orbs */}
-        <div className="pointer-events-none absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-[#39b54a]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-[500px] w-[500px] rounded-full bg-[#e53935]/10 blur-3xl" />
-        <div className="pointer-events-none absolute top-1/2 right-1/4 h-[300px] w-[400px] -translate-y-1/2 rounded-full bg-[#f2c318]/8 blur-3xl" />
+        <div className="pointer-events-none absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-[#00e400]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 h-[500px] w-[500px] rounded-full bg-[#7e0023]/10 blur-3xl" />
+        <div className="pointer-events-none absolute top-1/2 right-1/4 h-[300px] w-[400px] -translate-y-1/2 rounded-full bg-[#ff7e00]/8 blur-3xl" />
 
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-16 lg:flex-row lg:items-center">
           {/* Text */}
@@ -42,11 +42,11 @@ export default async function HomePage({ params }: Props) {
               {h.eyebrow}
             </Badge>
 
-            <h1 className="mb-6 whitespace-pre-line text-5xl font-bold tracking-tight leading-[1.1] sm:text-6xl lg:text-7xl bg-linear-to-r from-[#39b54a] via-[#f2c318] to-[#e53935] bg-clip-text text-transparent">
+            <h1 className="mb-6 whitespace-pre-line text-5xl font-bold tracking-tight leading-[1.1] sm:text-6xl lg:text-7xl bg-linear-to-r from-[#00e400] via-[#ff7e00] to-[#7e0023] bg-clip-text text-transparent">
               {h.headline}
             </h1>
 
-            <p className="mb-10 max-w-lg text-lg text-muted-foreground leading-relaxed">
+            <p className="mb-10 max-w-lg text-lg leading-relaxed bg-linear-to-r from-[#00e400] via-[#ff7e00] to-[#7e0023] bg-clip-text text-transparent">
               {h.subheadline}
             </p>
 
@@ -60,8 +60,8 @@ export default async function HomePage({ params }: Props) {
 
           {/* Gauge visual */}
           <div className="relative flex shrink-0 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-[#39b54a]/10 blur-3xl scale-110" />
-            <GaugeAnimation className="relative w-64 sm:w-80 lg:w-[420px] drop-shadow-2xl" />
+            <div className="absolute inset-0 rounded-full bg-[#00e400]/10 blur-3xl scale-110" />
+            <GaugeAnimationV2 className="relative w-80 sm:w-96 lg:w-[420px] drop-shadow-2xl" />
           </div>
         </div>
       </section>

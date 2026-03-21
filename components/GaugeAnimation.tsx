@@ -1,20 +1,36 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSessionFlag } from "@/lib/hooks/use-session-flag";
 
 type GaugeAnimationProps = {
   className?: string;
 };
 
+const MIN_DEG = -135;
+const MAX_DEG = 30;
+
 export function GaugeAnimation({ className }: GaugeAnimationProps) {
-  const shouldAnimate = useSessionFlag("gauge-animated");
   const needleRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
-    if (!shouldAnimate || !needleRef.current) return;
+    if (!needleRef.current) return;
+    const lastDeg = parseFloat(sessionStorage.getItem("gauge-angle") ?? String(MIN_DEG));
+
+    // Set needle immediately to last position (avoids SSR/hydration jump)
+    needleRef.current.style.transform = `rotate(${lastDeg}deg)`;
+
+    // Pick a direction: go left if near right edge, right if near left edge, else random
+    const mid = (MIN_DEG + MAX_DEG) / 2;
+    const goRight = lastDeg < mid ? true : lastDeg > mid ? false : Math.random() < 0.5;
+    const delta = 30 + Math.random() * 60; // 30–90 degrees
+    const targetDeg = Math.max(MIN_DEG, Math.min(MAX_DEG, lastDeg + (goRight ? delta : -delta)));
+    sessionStorage.setItem("gauge-angle", String(targetDeg));
+
     const animation = needleRef.current.animate(
-      [{ transform: "rotate(-135deg)" }, { transform: "rotate(15deg)" }],
+      [
+        { transform: `rotate(${lastDeg}deg)` },
+        { transform: `rotate(${targetDeg}deg)` },
+      ],
       {
         duration: 1000,
         delay: 1000,
@@ -23,7 +39,7 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
       }
     );
     return () => animation.cancel();
-  }, [shouldAnimate]);
+  }, []);
 
   return (
     <svg
@@ -41,9 +57,13 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
           y2="0"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#39b54a" />
-          <stop offset="50%" stopColor="#f2c318" />
-          <stop offset="100%" stopColor="#e53935" />
+          <stop offset="0%"   stopColor="#00e400" />
+          <stop offset="10%"  stopColor="#ffff00" />
+          <stop offset="20%"  stopColor="#ff7e00" />
+          <stop offset="30%"  stopColor="#ff0000" />
+          <stop offset="40%"  stopColor="#8f3f97" />
+          <stop offset="60%"  stopColor="#7e0023" />
+          <stop offset="100%" stopColor="#7e0023" />
         </linearGradient>
         <linearGradient
           id="ga-needle"
@@ -53,9 +73,13 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
           y2="128"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#39b54a" />
-          <stop offset="50%" stopColor="#f2c318" />
-          <stop offset="100%" stopColor="#e53935" />
+          <stop offset="0%"   stopColor="#00e400" />
+          <stop offset="10%"  stopColor="#ffff00" />
+          <stop offset="20%"  stopColor="#ff7e00" />
+          <stop offset="30%"  stopColor="#ff0000" />
+          <stop offset="40%"  stopColor="#8f3f97" />
+          <stop offset="60%"  stopColor="#7e0023" />
+          <stop offset="100%" stopColor="#7e0023" />
         </linearGradient>
       </defs>
 
@@ -76,7 +100,7 @@ export function GaugeAnimation({ className }: GaugeAnimationProps) {
         ref={needleRef}
         style={{
           transformOrigin: "300px 220px",
-          transform: shouldAnimate ? "rotate(-135deg)" : "rotate(15deg)",
+          transform: `rotate(${MIN_DEG}deg)`,
         }}
       >
         <path
