@@ -17,11 +17,8 @@ export default async function StationsLayout({ children, params }: Props) {
   const dict = await getDictionary(lang);
 
   return (
-    <div
-      className="grid min-h-dvh"
-      style={{ gridTemplateRows: "auto 1fr auto" }}
-    >
-      <header className="sticky top-0 z-50 h-14 border-b bg-background/95 backdrop-blur justify-between">
+    <>
+      <header className="fixed top-0 inset-x-0 z-50 h-14 bg-background/20 backdrop-blur-md justify-between">
         <div className="flex h-full w-full items-center px-6 gap-4">
           <Link href={`/${lang}`} className="flex items-center gap-2 grow">
             <Image
@@ -39,8 +36,12 @@ export default async function StationsLayout({ children, params }: Props) {
           <ThemeToggle />
         </div>
       </header>
-      {children}
-      <footer className="border-t text-xs text-muted-foreground overflow-x-auto scrollbar-none">
+      <div
+        className="grid min-h-dvh"
+        style={{ gridTemplateRows: "1fr auto" }}
+      >
+        {children}
+        <footer className="border-t text-xs text-muted-foreground overflow-x-auto scrollbar-none">
         <ul className="flex items-center justify-center gap-3 whitespace-nowrap px-6 py-4 min-w-max mx-auto">
           <li>© {new Date().getFullYear()} {dict.nav.title}</li>
           <li className="opacity-30" aria-hidden>·</li>
@@ -69,7 +70,8 @@ export default async function StationsLayout({ children, params }: Props) {
             </Link>
           </li>
         </ul>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 }

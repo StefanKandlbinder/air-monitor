@@ -28,7 +28,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <main className="flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative flex min-h-[calc(100dvh-3.5rem)] items-center overflow-hidden px-6 py-24">
+      <section className="relative flex min-h-dvh items-center overflow-hidden px-6 py-24">
         {/* Ambient orbs */}
         <div className="pointer-events-none absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-[#00e400]/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-20 h-[500px] w-[500px] rounded-full bg-[#7e0023]/10 blur-3xl" />

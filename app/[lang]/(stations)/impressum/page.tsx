@@ -19,7 +19,7 @@ export default async function ImpressumPage({ params }: Props) {
   const d = dict.impressum;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16 flex-1">
+    <main className="mx-auto max-w-2xl px-6 pt-[calc(3.5rem+4rem)] pb-16 flex-1">
       <h1 className="text-3xl font-bold tracking-tight mb-8">{d.title}</h1>
 
       <section className="mb-8">

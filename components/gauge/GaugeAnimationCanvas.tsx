@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage";
 
 // ---------------------------------------------------------------------------
@@ -110,8 +111,7 @@ function springEase(x: number): number {
 // Canvas draw — all coordinates in logical 500×430 space
 // ---------------------------------------------------------------------------
 
-function drawGauge(ctx: CanvasRenderingContext2D, val: number): void {
-  const isDark = document.documentElement.classList.contains("dark");
+function drawGauge(ctx: CanvasRenderingContext2D, val: number, isDark: boolean): void {
 
   ctx.clearRect(0, 0, W, H);
 
@@ -242,8 +242,17 @@ function drawGauge(ctx: CanvasRenderingContext2D, val: number): void {
 type Props = { className?: string };
 
 export function GaugeAnimationCanvas({ className }: Props) {
-  const canvasRef    = useRef<HTMLCanvasElement>(null);
-  const gaugeStorage = useLocalStorage("gauge-v2", 0);
+  const canvasRef     = useRef<HTMLCanvasElement>(null);
+  const ctxRef        = useRef<CanvasRenderingContext2D | null>(null);
+  const currentValRef = useRef<number>(0);
+  const isDarkRef     = useRef<boolean>(false);
+  const gaugeStorage  = useLocalStorage("gauge-v2", 0);
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    isDarkRef.current = resolvedTheme === "dark";
+    if (ctxRef.current) drawGauge(ctxRef.current, currentValRef.current, isDarkRef.current);
+  }, [resolvedTheme]);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -256,11 +265,12 @@ export function GaugeAnimationCanvas({ className }: Props) {
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    ctxRef.current = ctx;
     // Map logical 500×430 coordinate space onto the actual rendered size
     ctx.scale(dpr * rect.width / W, dpr * rect.height / H);
 
     // --- Same start/target logic as GaugeAnimationV2 ---
-    const lastVal   = gaugeStorage.get();
+    const storedVal = gaugeStorage.get();
     const inSession = sessionStorage.getItem("gauge-v2-session") === "1";
     sessionStorage.setItem("gauge-v2-session", "1");
 
@@ -269,17 +279,18 @@ export function GaugeAnimationCanvas({ className }: Props) {
 
     if (!inSession) {
       startVal  = 0;
-      targetVal = gaugeStorage.has() ? lastVal : 50 + Math.random() * 300;
+      targetVal = gaugeStorage.has() ? storedVal : 50 + Math.random() * 300;
     } else {
-      startVal = lastVal;
+      startVal = storedVal;
       const mid  = MAX_VAL / 2;
-      const goUp = lastVal < mid ? true : lastVal > mid ? false : Math.random() < 0.5;
+      const goUp = storedVal < mid ? true : storedVal > mid ? false : Math.random() < 0.5;
       const delta = 60 + Math.random() * 150;
-      targetVal = Math.max(0, Math.min(MAX_VAL, lastVal + (goUp ? delta : -delta)));
+      targetVal = Math.max(0, Math.min(MAX_VAL, storedVal + (goUp ? delta : -delta)));
     }
 
     // Draw initial frame before any animation
-    drawGauge(ctx, startVal);
+    currentValRef.current = startVal;
+    drawGauge(ctx, startVal, isDarkRef.current);
 
     const DELAY    = 800;
     const DURATION = 1500;
@@ -292,7 +303,8 @@ export function GaugeAnimationCanvas({ className }: Props) {
       const t   = Math.min((now - animStart) / DURATION, 1);
       const val = startVal + (targetVal - startVal) * springEase(t);
 
-      drawGauge(ctx, val);
+      currentValRef.current = val;
+      drawGauge(ctx, val, isDarkRef.current);
 
       if (t < 1) {
         raf = requestAnimationFrame(tick);

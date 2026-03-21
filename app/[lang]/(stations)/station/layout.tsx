@@ -4,7 +4,7 @@ export default function StationLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8">
+    <main className="mx-auto w-full max-w-7xl space-y-6 px-6 pt-[calc(3.5rem+2rem)] pb-8">
       {children}
     </main>
   );

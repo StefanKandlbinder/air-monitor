@@ -84,7 +84,7 @@ export function MapCard({
       />
 
       {/* Toolbar overlay */}
-      <div className="absolute left-4 top-4 z-10 flex flex-wrap items-center gap-2">
+      <div className="absolute left-4 top-[calc(3.5rem+1rem)] z-10 flex flex-wrap items-center gap-2">
         <LocationSearch
           onSelectPlace={onSelectPlace}
           selectedLabel={selectedLabel}
