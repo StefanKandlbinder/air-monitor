@@ -308,7 +308,7 @@ export function GaugeAnimationV2({ className }: Props) {
       <g ref={needleRef} style={{ transformOrigin: `${CX}px ${CY}px` }}>
         <path
           className="gv2-needle"
-          d={`M ${CX - 14},${CY - 5} L ${CX + R - 28},${CY} L ${CX - 14},${CY + 5} Z`}
+          d={`M ${CX - 16},${CY - 8} L ${CX + R - 38},${CY - 3} A 3 3 0 0 1 ${CX + R - 38},${CY + 3} L ${CX - 16},${CY + 8} Z`}
         />
       </g>
 
