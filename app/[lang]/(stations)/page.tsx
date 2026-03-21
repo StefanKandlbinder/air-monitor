@@ -4,7 +4,6 @@ import { GaugeAnimationCanvas } from "@/components/gauge/GaugeAnimationCanvas";
 import { ArrowRight, Zap, Globe2, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { getDictionary, hasLocale } from "@/lib/dictionaries";
 import { AQI_COLORS } from "@/lib/aqiColors";
 
@@ -37,10 +36,6 @@ export default async function HomePage({ params }: Props) {
         <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-16 lg:flex-row lg:items-center">
           {/* Text */}
           <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
-            <Badge variant="secondary" className="mb-6 gap-2 px-3 py-1 text-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              {h.eyebrow}
-            </Badge>
 
             <h1 className="mb-6 whitespace-pre-line text-5xl font-bold tracking-tight leading-[1.1] sm:text-6xl lg:text-7xl bg-linear-to-r from-[#00e400] via-[#ff7e00] to-[#7e0023] bg-clip-text text-transparent">
               {h.headline}
@@ -59,7 +54,7 @@ export default async function HomePage({ params }: Props) {
           </div>
 
           {/* Gauge visual */}
-          <div className="relative w-80 sm:w-96 lg:w-[420px] shrink-0">
+          <div className="relative w-88 sm:w-96 lg:w-[420px] shrink-0">
             <div className="absolute inset-0 rounded-full bg-[#00e400]/10 blur-3xl scale-110" />
             <GaugeAnimationCanvas className="relative drop-shadow-2xl" />
           </div>
