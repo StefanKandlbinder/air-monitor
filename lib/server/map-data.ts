@@ -83,9 +83,7 @@ async function fetchLocationLatest(locationId: number): Promise<OpenAQLatestEntr
 
   const newEntry: LatestCacheEntry = { value: [], expiresAt: now + secondsUntilNextHour() * 1000 };
   newEntry.promise = openaqGet<OpenAQLatestResponse>(
-    `/v3/locations/${locationId}/latest`,
-    undefined,
-    { cache: "no-store" }
+    `/v3/locations/${locationId}/latest`
   )
     .then((data) => {
       newEntry.value = data.results;
