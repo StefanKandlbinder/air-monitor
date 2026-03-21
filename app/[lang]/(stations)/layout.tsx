@@ -41,7 +41,7 @@ export default async function StationsLayout({ children, params }: Props) {
         style={{ gridTemplateRows: "1fr auto" }}
       >
         {children}
-        <footer className="border-t text-xs text-muted-foreground overflow-x-auto scrollbar-none">
+        <footer className="text-xs text-muted-foreground overflow-x-auto scrollbar-none">
         <ul className="flex items-center justify-center gap-3 whitespace-nowrap px-6 py-4 min-w-max mx-auto">
           <li>© {new Date().getFullYear()} {dict.nav.title}</li>
           <li className="opacity-30" aria-hidden>·</li>
